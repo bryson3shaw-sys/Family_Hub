@@ -404,15 +404,16 @@
 
   .event-pill:hover { opacity: 0.8; }
 
-  /* Family member colors */
-  .ev-lincoln   { background: rgba(58,124,189,0.15); color: #2a6090; }
-  .ev-callahan  { background: rgba(196,98,45,0.15);  color: #9e4a1a; }
-  .ev-augusta   { background: rgba(181,134,13,0.15); color: #8a6400; }
-  .ev-kylee     { background: rgba(139,90,149,0.15); color: #6a3d7a; }
-  .ev-dad       { background: rgba(44,107,79,0.15);  color: #1e5535; }
-  .ev-family    { background: rgba(100,100,100,0.12); color: #444; }
-  .ev-vacation  { background: rgba(44,107,79,0.25);  color: var(--accent); font-style: italic; }
-  .ev-honey     { background: rgba(181,134,13,0.2);  color: var(--gold); }
+  /* Family member colors — matched to Google Calendar */
+  .ev-augusta   { background: rgba(51,182,121,0.18);  color: #1e8a55; }  /* sage green */
+  .ev-bryson    { background: rgba(213,0,0,0.13);     color: #b00000; }  /* tomato red */
+  .ev-callahan  { background: rgba(121,134,203,0.2);  color: #5c6bc0; }  /* lavender purple */
+  .ev-honey     { background: rgba(97,97,97,0.15);    color: #424242; }  /* graphite/dark */
+  .ev-kylee     { background: rgba(142,36,170,0.15);  color: #7b1fa2; }  /* grape */
+  .ev-lincoln   { background: rgba(230,124,115,0.2);  color: #c0392b; }  /* flamingo/orange-red */
+  .ev-family    { background: rgba(3,155,229,0.15);   color: #0277bd; }  /* peacock blue */
+  .ev-vacation  { background: rgba(240,98,146,0.18);  color: #c2185b; font-style: italic; }  /* flamingo pink */
+  .ev-holidays  { background: rgba(51,182,121,0.1);   color: #2e7d52; font-style: italic; }
 
   .no-events {
     font-size: 11px;
@@ -922,7 +923,7 @@
     <div class="card markets">
       <div class="markets-header">
         <div class="section-label">Markets</div>
-        <div class="markets-updated" id="markets-time">Sample data — live feed coming soon</div>
+        <div class="markets-updated" id="markets-time">Loading...</div>
       </div>
       <div class="markets-groups">
 
@@ -930,29 +931,29 @@
         <div>
           <div class="markets-group-label">🌽 Grains</div>
           <div class="markets-row">
-            <div class="market-chip">
+            <div class="market-chip" id="chip-ZC">
               <div class="market-symbol">ZC</div>
               <div class="market-name">Corn</div>
-              <div class="market-price">448'2</div>
-              <div class="market-change up">▲ +3'4 (+0.77%)</div>
+              <div class="market-price" id="price-ZC">—</div>
+              <div class="market-change" id="change-ZC">—</div>
             </div>
-            <div class="market-chip">
+            <div class="market-chip" id="chip-ZS">
               <div class="market-symbol">ZS</div>
               <div class="market-name">Soybeans</div>
-              <div class="market-price">1024'6</div>
-              <div class="market-change down">▼ -6'2 (-0.60%)</div>
+              <div class="market-price" id="price-ZS">—</div>
+              <div class="market-change" id="change-ZS">—</div>
             </div>
-            <div class="market-chip">
+            <div class="market-chip" id="chip-KE">
               <div class="market-symbol">KE</div>
               <div class="market-name">HRW Wheat</div>
-              <div class="market-price">562'4</div>
-              <div class="market-change up">▲ +1'6 (+0.32%)</div>
+              <div class="market-price" id="price-KE">—</div>
+              <div class="market-change" id="change-KE">—</div>
             </div>
-            <div class="market-chip">
+            <div class="market-chip" id="chip-MWE">
               <div class="market-symbol">MWE</div>
               <div class="market-name">DNSW Wheat</div>
-              <div class="market-price">598'2</div>
-              <div class="market-change down">▼ -2'0 (-0.33%)</div>
+              <div class="market-price" id="price-MWE">—</div>
+              <div class="market-change" id="change-MWE">—</div>
             </div>
           </div>
         </div>
@@ -961,41 +962,41 @@
         <div>
           <div class="markets-group-label">📈 Macro</div>
           <div class="markets-row">
-            <div class="market-chip">
+            <div class="market-chip" id="chip-ES">
               <div class="market-symbol">ES</div>
               <div class="market-name">S&amp;P 500</div>
-              <div class="market-price">5,842</div>
-              <div class="market-change up">▲ +18 (+0.31%)</div>
+              <div class="market-price" id="price-ES">—</div>
+              <div class="market-change" id="change-ES">—</div>
             </div>
-            <div class="market-chip">
+            <div class="market-chip" id="chip-YM">
               <div class="market-symbol">YM</div>
               <div class="market-name">Dow</div>
-              <div class="market-price">43,210</div>
-              <div class="market-change up">▲ +94 (+0.22%)</div>
+              <div class="market-price" id="price-YM">—</div>
+              <div class="market-change" id="change-YM">—</div>
             </div>
-            <div class="market-chip">
+            <div class="market-chip" id="chip-DX">
               <div class="market-symbol">DX</div>
               <div class="market-name">Dollar</div>
-              <div class="market-price">104.32</div>
-              <div class="market-change down">▼ -0.18 (-0.17%)</div>
+              <div class="market-price" id="price-DX">—</div>
+              <div class="market-change" id="change-DX">—</div>
             </div>
-            <div class="market-chip">
+            <div class="market-chip" id="chip-BTC">
               <div class="market-symbol">BTC</div>
               <div class="market-name">Bitcoin</div>
-              <div class="market-price">$87,420</div>
-              <div class="market-change up">▲ +1,240 (+1.44%)</div>
+              <div class="market-price" id="price-BTC">—</div>
+              <div class="market-change" id="change-BTC">—</div>
             </div>
-            <div class="market-chip">
+            <div class="market-chip" id="chip-GC">
               <div class="market-symbol">GC</div>
               <div class="market-name">Gold</div>
-              <div class="market-price">2,918</div>
-              <div class="market-change up">▲ +12 (+0.41%)</div>
+              <div class="market-price" id="price-GC">—</div>
+              <div class="market-change" id="change-GC">—</div>
             </div>
-            <div class="market-chip">
+            <div class="market-chip" id="chip-CL">
               <div class="market-symbol">CL</div>
               <div class="market-name">WTI Crude</div>
-              <div class="market-price">71.84</div>
-              <div class="market-change down">▼ -0.62 (-0.86%)</div>
+              <div class="market-price" id="price-CL">—</div>
+              <div class="market-change" id="change-CL">—</div>
             </div>
           </div>
         </div>
@@ -1200,7 +1201,7 @@ const CALENDARS = [
   { name: 'family',   who: 'family',   url: 'https://calendar.google.com/calendar/ical/6acbc68161b472c57c564f604ece8a0586493c53fb8db7cadaed6f038af8ab49%40group.calendar.google.com/private-af493fa12761d91cfd2197f2a8dfd33c/basic.ics' },
   { name: 'vacation', who: 'vacation', url: 'https://calendar.google.com/calendar/ical/f0d20fde03d564e0d5ed316f046ac3e8da0812e502e6adabde06d456ad940da5%40group.calendar.google.com/private-1756047f5174afeb48a2da3e4a49ebae/basic.ics' },
   { name: 'honey',    who: 'honey',    url: 'https://calendar.google.com/calendar/ical/b65bc65ad6202188d1fda2a7148e52dd451224278d292126fc1282945c65848b%40group.calendar.google.com/private-692f59cd7358e3f75685bca17be7aefb/basic.ics' },
-  { name: 'holidays', who: 'family',   url: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics' },
+  { name: 'holidays', who: 'holidays', url: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics' },
 ];
 
 // Parse iCal text into event objects
@@ -1321,11 +1322,22 @@ function buildWeekGrid(allEvents = []) {
       none.textContent = 'Free';
       col.appendChild(none);
     } else {
-      dayEvents.slice(0, 4).forEach(ev => { // max 4 per day to avoid overflow
+      dayEvents.slice(0, 4).forEach(ev => {
         const pill = document.createElement('div');
         pill.className = `event-pill ev-${ev.who}`;
-        pill.textContent = ev.summary;
-        pill.title = ev.summary; // tooltip on hover
+
+        // Format time if not all-day
+        let timeStr = '';
+        if (!ev.allDay && ev.start) {
+          const s = new Date(ev.start);
+          const h = s.getHours() % 12 || 12;
+          const m = String(s.getMinutes()).padStart(2,'0');
+          const ap = s.getHours() >= 12 ? 'p' : 'a';
+          timeStr = `<span style="opacity:0.65; font-size:9px; margin-right:3px;">${h}:${m}${ap}</span>`;
+        }
+
+        pill.innerHTML = timeStr + ev.summary;
+        pill.title = ev.summary;
         col.appendChild(pill);
       });
       if (dayEvents.length > 4) {
@@ -1346,6 +1358,86 @@ buildWeekGrid([]);
 fetchCalendars();
 // Refresh every 30 minutes
 setInterval(fetchCalendars, 30 * 60 * 1000);
+
+// ── LIVE MARKETS (Yahoo Finance via proxy) ──
+const MARKET_SYMBOLS = {
+  // Grains — front month futures
+  'ZC=F':  { id: 'ZC',  fmt: 'cents' },   // Corn
+  'ZS=F':  { id: 'ZS',  fmt: 'cents' },   // Soybeans
+  'KE=F':  { id: 'KE',  fmt: 'cents' },   // HRW Wheat
+  'MWE=F': { id: 'MWE', fmt: 'cents' },   // DNSW Wheat
+  // Macro
+  'ES=F':  { id: 'ES',  fmt: 'comma' },   // S&P 500
+  'YM=F':  { id: 'YM',  fmt: 'comma' },   // Dow
+  'DX=F':  { id: 'DX',  fmt: 'two'   },   // Dollar Index
+  'BTC-USD':{ id: 'BTC', fmt: 'dollar'},  // Bitcoin
+  'GC=F':  { id: 'GC',  fmt: 'comma' },   // Gold
+  'CL=F':  { id: 'CL',  fmt: 'two'   },   // WTI Crude
+};
+
+function formatPrice(price, fmt) {
+  if (fmt === 'cents') {
+    // Grain futures displayed as XXX'X (dollars and eighths)
+    const whole = Math.floor(price);
+    const frac  = Math.round((price - whole) * 8);
+    return `${whole}'${frac}`;
+  }
+  if (fmt === 'dollar') return '$' + price.toLocaleString('en-US', {maximumFractionDigits: 0});
+  if (fmt === 'comma')  return price.toLocaleString('en-US', {maximumFractionDigits: 2});
+  if (fmt === 'two')    return price.toFixed(2);
+  return price.toString();
+}
+
+async function fetchMarkets() {
+  const symbols = Object.keys(MARKET_SYMBOLS).join(',');
+  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}`;
+  const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+
+  try {
+    const res  = await fetch(proxyUrl);
+    const data = await res.json();
+    const quotes = data?.quoteResponse?.result || [];
+
+    quotes.forEach(q => {
+      const cfg    = MARKET_SYMBOLS[q.symbol];
+      if (!cfg) return;
+
+      const price  = q.regularMarketPrice;
+      const change = q.regularMarketChange;
+      const pct    = q.regularMarketChangePercent;
+      if (price == null) return;
+
+      const priceEl  = document.getElementById(`price-${cfg.id}`);
+      const changeEl = document.getElementById(`change-${cfg.id}`);
+      if (!priceEl || !changeEl) return;
+
+      priceEl.textContent = formatPrice(price, cfg.fmt);
+
+      const isUp    = change >= 0;
+      const arrow   = isUp ? '▲' : '▼';
+      const absChg  = Math.abs(change);
+      const absPct  = Math.abs(pct).toFixed(2);
+      const chgFmt  = formatPrice(absChg, cfg.fmt);
+
+      changeEl.textContent = `${arrow} ${chgFmt} (${absPct}%)`;
+      changeEl.className   = `market-change ${isUp ? 'up' : 'down'}`;
+    });
+
+    // Update timestamp
+    const now = new Date();
+    const h   = now.getHours() % 12 || 12;
+    const m   = String(now.getMinutes()).padStart(2,'0');
+    const ap  = now.getHours() >= 12 ? 'PM' : 'AM';
+    document.getElementById('markets-time').textContent = `15min delay · updated ${h}:${m} ${ap}`;
+
+  } catch(e) {
+    console.warn('Markets fetch failed:', e);
+    document.getElementById('markets-time').textContent = 'Data unavailable';
+  }
+}
+
+fetchMarkets();
+setInterval(fetchMarkets, 5 * 60 * 1000); // refresh every 5 min
 
 // ── COUNTDOWN ──
 const TARGET    = new Date('2026-03-15T00:00:00');
