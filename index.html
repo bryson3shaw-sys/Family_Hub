@@ -892,31 +892,13 @@
 
     <!-- NEWS -->
     <div class="card news">
-      <div class="section-label">Breaking News</div>
+      <div class="section-label" id="news-label">News</div>
       <div class="news-scroll-wrap">
         <div class="news-list" id="news-list">
-          <div class="news-item">
-            <span class="news-tag breaking">Breaking</span>
-            <span>USDA crop progress report shows corn planting ahead of 5-year average across the Corn Belt.</span>
-          </div>
-          <div class="news-item">
-            <span class="news-tag markets">Markets</span>
-            <span>Grain futures mixed overnight as weather models diverge on Midwest rainfall outlook.</span>
-          </div>
-          <div class="news-item">
-            <span class="news-tag world">World</span>
-            <span>Black Sea corridor negotiations stall, adding uncertainty to global wheat supply.</span>
-          </div>
-          <div class="news-item">
-            <span class="news-tag markets">Markets</span>
-            <span>Fed holds rates steady; dollar index dips, providing mild support to commodity prices.</span>
-          </div>
-          <div class="news-item">
-            <span class="news-tag breaking">Breaking</span>
-            <span>La Niña conditions expected to persist through Q2, impacting South American crop prospects.</span>
-          </div>
+          <div class="news-item" style="color:var(--text-muted); font-style:italic; font-size:11px;">Loading headlines...</div>
         </div>
       </div>
+      <div style="font-size:9px; color:var(--text-muted); font-style:italic; margin-top:4px;" id="news-updated"></div>
     </div>
 
     <!-- MARKETS -->
@@ -1442,6 +1424,107 @@ async function fetchMarkets() {
 
 fetchMarkets();
 setInterval(fetchMarkets, 5 * 60 * 1000);
+
+// ── LIVE NEWS (RSS via proxy) ──
+const RSS_FEEDS = [
+  { url: 'https://feeds.reuters.com/reuters/businessNews', tag: 'markets', label: 'Reuters' },
+  { url: 'https://feeds.reuters.com/reuters/environment', tag: 'ag',      label: 'Reuters' },
+  { url: 'https://www.usda.gov/rss/home.xml',             tag: 'usda',    label: 'USDA'    },
+  { url: 'https://www.dtnpf.com/agriculture/web/ag/news/rss', tag: 'ag', label: 'DTN'     },
+  { url: 'https://feeds.bloomberg.com/markets/news.rss',  tag: 'markets', label: 'Bloomberg'},
+  { url: 'https://apnews.com/rss/business',               tag: 'breaking',label: 'AP'      },
+];
+
+const TAG_STYLES = {
+  markets:  { label: 'Markets',  cls: 'markets'  },
+  ag:       { label: 'Ag',       cls: 'markets'  },
+  usda:     { label: 'USDA',     cls: 'world'    },
+  breaking: { label: 'Breaking', cls: 'breaking' },
+  world:    { label: 'World',    cls: 'world'    },
+};
+
+async function fetchRSSFeed(feed) {
+  try {
+    const proxy = 'https://corsproxy.io/?' + encodeURIComponent(feed.url);
+    const res   = await fetch(proxy);
+    const text  = await res.text();
+    const parser = new DOMParser();
+    const xml    = parser.parseFromString(text, 'text/xml');
+    const items  = Array.from(xml.querySelectorAll('item')).slice(0, 4);
+
+    return items.map(item => ({
+      title: item.querySelector('title')?.textContent?.trim() || '',
+      tag:   feed.tag,
+      label: feed.label,
+      date:  item.querySelector('pubDate')?.textContent || '',
+    })).filter(i => i.title.length > 10);
+  } catch(e) {
+    console.warn(`RSS fetch failed: ${feed.label}`, e);
+    return [];
+  }
+}
+
+// Keywords to prioritize ag/commodity content
+const AG_KEYWORDS = ['corn','wheat','soy','grain','crop','usda','harvest','bushel',
+  'futures','commodity','agriculture','farm','cattle','hog','ethanol','export',
+  'drought','planting','supply','demand','fed ','dollar','oil','gold','market'];
+
+function agScore(title) {
+  const t = title.toLowerCase();
+  return AG_KEYWORDS.reduce((score, kw) => score + (t.includes(kw) ? 2 : 0), 0);
+}
+
+async function fetchNews() {
+  const results = await Promise.allSettled(RSS_FEEDS.map(fetchRSSFeed));
+  let allItems = [];
+
+  results.forEach(r => {
+    if (r.status === 'fulfilled') allItems.push(...r.value);
+  });
+
+  // Sort: ag-relevant first, then by recency
+  allItems.sort((a, b) => {
+    const scoreDiff = agScore(b.title) - agScore(a.title);
+    if (scoreDiff !== 0) return scoreDiff;
+    return new Date(b.date) - new Date(a.date);
+  });
+
+  // Deduplicate similar headlines
+  const seen = new Set();
+  allItems = allItems.filter(item => {
+    const key = item.title.slice(0, 40).toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  const list = document.getElementById('news-list');
+  if (allItems.length === 0) {
+    list.innerHTML = '<div class="news-item" style="color:var(--text-muted);font-style:italic;font-size:11px;">No headlines available</div>';
+    return;
+  }
+
+  list.innerHTML = allItems.slice(0, 12).map(item => {
+    const ts = TAG_STYLES[item.tag] || TAG_STYLES.breaking;
+    return `
+      <div class="news-item">
+        <div>
+          <span class="news-tag ${ts.cls}">${item.label}</span>
+        </div>
+        <span>${item.title}</span>
+      </div>`;
+  }).join('');
+
+  // Update timestamp
+  const now = new Date();
+  const h   = now.getHours() % 12 || 12;
+  const m   = String(now.getMinutes()).padStart(2,'0');
+  const ap  = now.getHours() >= 12 ? 'PM' : 'AM';
+  document.getElementById('news-updated').textContent = `Updated ${h}:${m} ${ap}`;
+}
+
+fetchNews();
+setInterval(fetchNews, 15 * 60 * 1000); // refresh every 15 min
 
 // ── COUNTDOWN ──
 const TARGET    = new Date('2026-03-15T00:00:00');
