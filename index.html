@@ -1359,19 +1359,21 @@ fetchCalendars();
 // Refresh every 30 minutes
 setInterval(fetchCalendars, 30 * 60 * 1000);
 
-// ── LIVE MARKETS (Yahoo Finance via proxy) ──
-const MARKET_SYMBOLS = {
-  'ZC=F':   { id: 'ZC',  fmt: 'cents' },
-  'ZS=F':   { id: 'ZS',  fmt: 'cents' },
-  'KE=F':   { id: 'KE',  fmt: 'cents' },
-  'MWE=F':  { id: 'MWE', fmt: 'cents' },
-  'ES=F':   { id: 'ES',  fmt: 'comma' },
-  'YM=F':   { id: 'YM',  fmt: 'comma' },
-  'DX=F':   { id: 'DX',  fmt: 'two'   },
-  'BTC-USD':{ id: 'BTC', fmt: 'dollar'},
-  'GC=F':   { id: 'GC',  fmt: 'comma' },
-  'CL=F':   { id: 'CL',  fmt: 'two'   },
-};
+// ── LIVE MARKETS (Finnhub) ──
+const FINNHUB_KEY = 'd6igr6hr01qm7dc7f86gd6igr6hr01qm7dc7f870';
+
+const MARKET_SYMBOLS = [
+  { symbol: 'BINANCE:BTCUSDT', id: 'BTC', name: 'Bitcoin',  fmt: 'dollar' },
+  { symbol: 'OANDA:SPX500USD', id: 'ES',  name: 'S&P 500',  fmt: 'comma'  },
+  { symbol: 'OANDA:US30USD',   id: 'YM',  name: 'Dow',      fmt: 'comma'  },
+  { symbol: 'OANDA:USDOLLAR',  id: 'DX',  name: 'Dollar',   fmt: 'two'    },
+  { symbol: 'OANDA:XAUUSD',    id: 'GC',  name: 'Gold',     fmt: 'comma'  },
+  { symbol: 'OANDA:BCOUSD',    id: 'CL',  name: 'WTI Crude',fmt: 'two'    },
+  { symbol: 'CBOT:ZC1!',       id: 'ZC',  name: 'Corn',     fmt: 'cents'  },
+  { symbol: 'CBOT:ZS1!',       id: 'ZS',  name: 'Soybeans', fmt: 'cents'  },
+  { symbol: 'CBOT:KE1!',       id: 'KE',  name: 'HRW Wheat',fmt: 'cents'  },
+  { symbol: 'CBOT:MWE1!',      id: 'MWE', name: 'DNSW Wheat',fmt:'cents'  },
+];
 
 function formatPrice(price, fmt) {
   if (fmt === 'cents') {
@@ -1385,47 +1387,39 @@ function formatPrice(price, fmt) {
   return price.toString();
 }
 
-async function fetchOneSym(symbol) {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
-  const proxy = 'https://corsproxy.io/?' + encodeURIComponent(url);
-  const res  = await fetch(proxy);
+async function fetchOneFinnhub(symbol) {
+  const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${FINNHUB_KEY}`;
+  const res  = await fetch(url);
   const data = await res.json();
-  const meta = data?.chart?.result?.[0]?.meta;
-  if (!meta) return null;
-  return {
-    price:  meta.regularMarketPrice,
-    prev:   meta.chartPreviousClose ?? meta.previousClose,
-  };
+  // Finnhub returns: c=current, pc=prev close, d=change, dp=change%
+  if (!data || data.c == null || data.c === 0) return null;
+  return { price: data.c, prev: data.pc, change: data.d, pct: data.dp };
 }
 
 async function fetchMarkets() {
   document.getElementById('markets-time').textContent = 'Updating...';
-  const symbols = Object.keys(MARKET_SYMBOLS);
   let anySuccess = false;
 
-  await Promise.allSettled(symbols.map(async sym => {
+  await Promise.allSettled(MARKET_SYMBOLS.map(async m => {
     try {
-      const q = await fetchOneSym(sym);
-      if (!q || q.price == null) return;
+      const q = await fetchOneFinnhub(m.symbol);
+      if (!q) return;
 
-      const cfg    = MARKET_SYMBOLS[sym];
-      const change = q.price - q.prev;
-      const pct    = (change / q.prev) * 100;
-      const isUp   = change >= 0;
-
-      const priceEl  = document.getElementById(`price-${cfg.id}`);
-      const changeEl = document.getElementById(`change-${cfg.id}`);
+      const priceEl  = document.getElementById(`price-${m.id}`);
+      const changeEl = document.getElementById(`change-${m.id}`);
       if (!priceEl || !changeEl) return;
 
-      priceEl.textContent  = formatPrice(q.price, cfg.fmt);
+      priceEl.textContent = formatPrice(q.price, m.fmt);
+
+      const isUp   = q.change >= 0;
       const arrow  = isUp ? '▲' : '▼';
-      const absChg = formatPrice(Math.abs(change), cfg.fmt);
-      const absPct = Math.abs(pct).toFixed(2);
+      const absChg = formatPrice(Math.abs(q.change), m.fmt);
+      const absPct = Math.abs(q.pct).toFixed(2);
       changeEl.textContent = `${arrow} ${absChg} (${absPct}%)`;
       changeEl.className   = `market-change ${isUp ? 'up' : 'down'}`;
       anySuccess = true;
     } catch(e) {
-      console.warn(`Market fetch failed for ${sym}:`, e);
+      console.warn(`Finnhub fetch failed for ${m.symbol}:`, e);
     }
   }));
 
@@ -1434,7 +1428,7 @@ async function fetchMarkets() {
   const m   = String(now.getMinutes()).padStart(2,'0');
   const ap  = now.getHours() >= 12 ? 'PM' : 'AM';
   document.getElementById('markets-time').textContent = anySuccess
-    ? `15min delay · updated ${h}:${m} ${ap}`
+    ? `Updated ${h}:${m} ${ap}`
     : 'Data unavailable — retrying';
 }
 
