@@ -1359,20 +1359,20 @@ fetchCalendars();
 // Refresh every 30 minutes
 setInterval(fetchCalendars, 30 * 60 * 1000);
 
-// ── LIVE MARKETS (Finnhub) ──
-const FINNHUB_KEY = 'd6igr6hr01qm7dc7f86gd6igr6hr01qm7dc7f870';
+// ── LIVE MARKETS (Finnhub for BTC, Twelve Data for everything else) ──
+const FINNHUB_KEY   = 'd6igr6hr01qm7dc7f86gd6igr6hr01qm7dc7f870';
+const TWELVEDATA_KEY = '2443cab0cf974bf98f338f2822f6b087';
 
-const MARKET_SYMBOLS = [
-  { symbol: 'BINANCE:BTCUSDT', id: 'BTC', name: 'Bitcoin',  fmt: 'dollar' },
-  { symbol: 'OANDA:SPX500USD', id: 'ES',  name: 'S&P 500',  fmt: 'comma'  },
-  { symbol: 'OANDA:US30USD',   id: 'YM',  name: 'Dow',      fmt: 'comma'  },
-  { symbol: 'OANDA:USDOLLAR',  id: 'DX',  name: 'Dollar',   fmt: 'two'    },
-  { symbol: 'OANDA:XAUUSD',    id: 'GC',  name: 'Gold',     fmt: 'comma'  },
-  { symbol: 'OANDA:BCOUSD',    id: 'CL',  name: 'WTI Crude',fmt: 'two'    },
-  { symbol: 'CBOT:ZC1!',       id: 'ZC',  name: 'Corn',     fmt: 'cents'  },
-  { symbol: 'CBOT:ZS1!',       id: 'ZS',  name: 'Soybeans', fmt: 'cents'  },
-  { symbol: 'CBOT:KE1!',       id: 'KE',  name: 'HRW Wheat',fmt: 'cents'  },
-  { symbol: 'CBOT:MWE1!',      id: 'MWE', name: 'DNSW Wheat',fmt:'cents'  },
+const TWELVEDATA_SYMBOLS = [
+  { symbol: 'SPX',     id: 'ES',  name: 'S&P 500',   fmt: 'comma' },
+  { symbol: 'DJI',     id: 'YM',  name: 'Dow',       fmt: 'comma' },
+  { symbol: 'DX',      id: 'DX',  name: 'Dollar',    fmt: 'two'   },
+  { symbol: 'XAU/USD', id: 'GC',  name: 'Gold',      fmt: 'comma' },
+  { symbol: 'WTI/USD', id: 'CL',  name: 'WTI Crude', fmt: 'two'   },
+  { symbol: 'ZC',      id: 'ZC',  name: 'Corn',      fmt: 'cents' },
+  { symbol: 'ZS',      id: 'ZS',  name: 'Soybeans',  fmt: 'cents' },
+  { symbol: 'KE',      id: 'KE',  name: 'HRW Wheat', fmt: 'cents' },
+  { symbol: 'MWE',     id: 'MWE', name: 'DNSW Wheat',fmt: 'cents' },
 ];
 
 function formatPrice(price, fmt) {
@@ -1387,49 +1387,57 @@ function formatPrice(price, fmt) {
   return price.toString();
 }
 
-async function fetchOneFinnhub(symbol) {
-  const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${FINNHUB_KEY}`;
-  const res  = await fetch(url);
-  const data = await res.json();
-  // Finnhub returns: c=current, pc=prev close, d=change, dp=change%
-  if (!data || data.c == null || data.c === 0) return null;
-  return { price: data.c, prev: data.pc, change: data.d, pct: data.dp };
+function updateChip(id, price, change, pct, fmt) {
+  const priceEl  = document.getElementById(`price-${id}`);
+  const changeEl = document.getElementById(`change-${id}`);
+  if (!priceEl || !changeEl || price == null) return;
+  priceEl.textContent  = formatPrice(price, fmt);
+  const isUp   = change >= 0;
+  const arrow  = isUp ? '▲' : '▼';
+  const absChg = formatPrice(Math.abs(change), fmt);
+  const absPct = Math.abs(pct).toFixed(2);
+  changeEl.textContent = `${arrow} ${absChg} (${absPct}%)`;
+  changeEl.className   = `market-change ${isUp ? 'up' : 'down'}`;
+}
+
+async function fetchBTC() {
+  const url  = `https://finnhub.io/api/v1/quote?symbol=BINANCE:BTCUSDT&token=${FINNHUB_KEY}`;
+  const data = await fetch(url).then(r => r.json());
+  if (!data?.c) return;
+  updateChip('BTC', data.c, data.d, data.dp, 'dollar');
+}
+
+async function fetchTwelveData() {
+  const syms = TWELVEDATA_SYMBOLS.map(s => s.symbol).join(',');
+  const url  = `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(syms)}&apikey=${TWELVEDATA_KEY}`;
+  const data = await fetch(url).then(r => r.json());
+
+  TWELVEDATA_SYMBOLS.forEach(m => {
+    // Twelve Data returns either a single object or keyed by symbol
+    const q = data[m.symbol] ?? data;
+    if (!q || q.code === 400 || q.code === 404) return;
+    const price  = parseFloat(q.close ?? q.price);
+    const prev   = parseFloat(q.previous_close);
+    const change = price - prev;
+    const pct    = (change / prev) * 100;
+    if (isNaN(price)) return;
+    updateChip(m.id, price, change, pct, m.fmt);
+  });
 }
 
 async function fetchMarkets() {
   document.getElementById('markets-time').textContent = 'Updating...';
-  let anySuccess = false;
-
-  await Promise.allSettled(MARKET_SYMBOLS.map(async m => {
-    try {
-      const q = await fetchOneFinnhub(m.symbol);
-      if (!q) return;
-
-      const priceEl  = document.getElementById(`price-${m.id}`);
-      const changeEl = document.getElementById(`change-${m.id}`);
-      if (!priceEl || !changeEl) return;
-
-      priceEl.textContent = formatPrice(q.price, m.fmt);
-
-      const isUp   = q.change >= 0;
-      const arrow  = isUp ? '▲' : '▼';
-      const absChg = formatPrice(Math.abs(q.change), m.fmt);
-      const absPct = Math.abs(q.pct).toFixed(2);
-      changeEl.textContent = `${arrow} ${absChg} (${absPct}%)`;
-      changeEl.className   = `market-change ${isUp ? 'up' : 'down'}`;
-      anySuccess = true;
-    } catch(e) {
-      console.warn(`Finnhub fetch failed for ${m.symbol}:`, e);
-    }
-  }));
-
-  const now = new Date();
-  const h   = now.getHours() % 12 || 12;
-  const m   = String(now.getMinutes()).padStart(2,'0');
-  const ap  = now.getHours() >= 12 ? 'PM' : 'AM';
-  document.getElementById('markets-time').textContent = anySuccess
-    ? `Updated ${h}:${m} ${ap}`
-    : 'Data unavailable — retrying';
+  try {
+    await Promise.allSettled([fetchBTC(), fetchTwelveData()]);
+    const now = new Date();
+    const h   = now.getHours() % 12 || 12;
+    const m   = String(now.getMinutes()).padStart(2,'0');
+    const ap  = now.getHours() >= 12 ? 'PM' : 'AM';
+    document.getElementById('markets-time').textContent = `Updated ${h}:${m} ${ap}`;
+  } catch(e) {
+    console.warn('Markets fetch error:', e);
+    document.getElementById('markets-time').textContent = 'Data unavailable — retrying';
+  }
 }
 
 fetchMarkets();
