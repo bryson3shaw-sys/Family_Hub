@@ -1361,23 +1361,20 @@ setInterval(fetchCalendars, 30 * 60 * 1000);
 
 // ── LIVE MARKETS (Yahoo Finance via proxy) ──
 const MARKET_SYMBOLS = {
-  // Grains — front month futures
-  'ZC=F':  { id: 'ZC',  fmt: 'cents' },   // Corn
-  'ZS=F':  { id: 'ZS',  fmt: 'cents' },   // Soybeans
-  'KE=F':  { id: 'KE',  fmt: 'cents' },   // HRW Wheat
-  'MWE=F': { id: 'MWE', fmt: 'cents' },   // DNSW Wheat
-  // Macro
-  'ES=F':  { id: 'ES',  fmt: 'comma' },   // S&P 500
-  'YM=F':  { id: 'YM',  fmt: 'comma' },   // Dow
-  'DX=F':  { id: 'DX',  fmt: 'two'   },   // Dollar Index
-  'BTC-USD':{ id: 'BTC', fmt: 'dollar'},  // Bitcoin
-  'GC=F':  { id: 'GC',  fmt: 'comma' },   // Gold
-  'CL=F':  { id: 'CL',  fmt: 'two'   },   // WTI Crude
+  'ZC=F':   { id: 'ZC',  fmt: 'cents' },
+  'ZS=F':   { id: 'ZS',  fmt: 'cents' },
+  'KE=F':   { id: 'KE',  fmt: 'cents' },
+  'MWE=F':  { id: 'MWE', fmt: 'cents' },
+  'ES=F':   { id: 'ES',  fmt: 'comma' },
+  'YM=F':   { id: 'YM',  fmt: 'comma' },
+  'DX=F':   { id: 'DX',  fmt: 'two'   },
+  'BTC-USD':{ id: 'BTC', fmt: 'dollar'},
+  'GC=F':   { id: 'GC',  fmt: 'comma' },
+  'CL=F':   { id: 'CL',  fmt: 'two'   },
 };
 
 function formatPrice(price, fmt) {
   if (fmt === 'cents') {
-    // Grain futures displayed as XXX'X (dollars and eighths)
     const whole = Math.floor(price);
     const frac  = Math.round((price - whole) * 8);
     return `${whole}'${frac}`;
@@ -1388,56 +1385,61 @@ function formatPrice(price, fmt) {
   return price.toString();
 }
 
+async function fetchOneSym(symbol) {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
+  const proxy = 'https://corsproxy.io/?' + encodeURIComponent(url);
+  const res  = await fetch(proxy);
+  const data = await res.json();
+  const meta = data?.chart?.result?.[0]?.meta;
+  if (!meta) return null;
+  return {
+    price:  meta.regularMarketPrice,
+    prev:   meta.chartPreviousClose ?? meta.previousClose,
+  };
+}
+
 async function fetchMarkets() {
-  const symbols = Object.keys(MARKET_SYMBOLS).join(',');
-  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}`;
-  const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+  document.getElementById('markets-time').textContent = 'Updating...';
+  const symbols = Object.keys(MARKET_SYMBOLS);
+  let anySuccess = false;
 
-  try {
-    const res  = await fetch(proxyUrl);
-    const data = await res.json();
-    const quotes = data?.quoteResponse?.result || [];
+  await Promise.allSettled(symbols.map(async sym => {
+    try {
+      const q = await fetchOneSym(sym);
+      if (!q || q.price == null) return;
 
-    quotes.forEach(q => {
-      const cfg    = MARKET_SYMBOLS[q.symbol];
-      if (!cfg) return;
-
-      const price  = q.regularMarketPrice;
-      const change = q.regularMarketChange;
-      const pct    = q.regularMarketChangePercent;
-      if (price == null) return;
+      const cfg    = MARKET_SYMBOLS[sym];
+      const change = q.price - q.prev;
+      const pct    = (change / q.prev) * 100;
+      const isUp   = change >= 0;
 
       const priceEl  = document.getElementById(`price-${cfg.id}`);
       const changeEl = document.getElementById(`change-${cfg.id}`);
       if (!priceEl || !changeEl) return;
 
-      priceEl.textContent = formatPrice(price, cfg.fmt);
-
-      const isUp    = change >= 0;
-      const arrow   = isUp ? '▲' : '▼';
-      const absChg  = Math.abs(change);
-      const absPct  = Math.abs(pct).toFixed(2);
-      const chgFmt  = formatPrice(absChg, cfg.fmt);
-
-      changeEl.textContent = `${arrow} ${chgFmt} (${absPct}%)`;
+      priceEl.textContent  = formatPrice(q.price, cfg.fmt);
+      const arrow  = isUp ? '▲' : '▼';
+      const absChg = formatPrice(Math.abs(change), cfg.fmt);
+      const absPct = Math.abs(pct).toFixed(2);
+      changeEl.textContent = `${arrow} ${absChg} (${absPct}%)`;
       changeEl.className   = `market-change ${isUp ? 'up' : 'down'}`;
-    });
+      anySuccess = true;
+    } catch(e) {
+      console.warn(`Market fetch failed for ${sym}:`, e);
+    }
+  }));
 
-    // Update timestamp
-    const now = new Date();
-    const h   = now.getHours() % 12 || 12;
-    const m   = String(now.getMinutes()).padStart(2,'0');
-    const ap  = now.getHours() >= 12 ? 'PM' : 'AM';
-    document.getElementById('markets-time').textContent = `15min delay · updated ${h}:${m} ${ap}`;
-
-  } catch(e) {
-    console.warn('Markets fetch failed:', e);
-    document.getElementById('markets-time').textContent = 'Data unavailable';
-  }
+  const now = new Date();
+  const h   = now.getHours() % 12 || 12;
+  const m   = String(now.getMinutes()).padStart(2,'0');
+  const ap  = now.getHours() >= 12 ? 'PM' : 'AM';
+  document.getElementById('markets-time').textContent = anySuccess
+    ? `15min delay · updated ${h}:${m} ${ap}`
+    : 'Data unavailable — retrying';
 }
 
 fetchMarkets();
-setInterval(fetchMarkets, 5 * 60 * 1000); // refresh every 5 min
+setInterval(fetchMarkets, 5 * 60 * 1000);
 
 // ── COUNTDOWN ──
 const TARGET    = new Date('2026-03-15T00:00:00');
