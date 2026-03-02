@@ -6,8 +6,7 @@
 <title>Family Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-
- <style>
+<style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   /* ── PASSWORD SCREEN ── */
@@ -1189,35 +1188,100 @@ async function fetchWeather() {
 fetchWeather();
 setInterval(fetchWeather, 10 * 60 * 1000); // refresh every 10 min
 
-// ── WEEK GRID ──
-const SAMPLE_EVENTS = [
-  { day: 0, title: "Soccer practice",   who: "lincoln"  },
-  { day: 0, title: "Dentist 2pm",       who: "kylee"    },
-  { day: 1, title: "Piano lesson",      who: "augusta"  },
-  { day: 1, title: "Team standup",      who: "dad"      },
-  { day: 2, title: "Basketball tryout", who: "callahan" },
-  { day: 2, title: "Date night 🍷",     who: "family"   },
-  { day: 3, title: "Book club",         who: "kylee"    },
-  { day: 3, title: "Flag football",     who: "lincoln"  },
-  { day: 4, title: "Augusta recital",   who: "augusta"  },
-  { day: 4, title: "Client dinner",     who: "dad"      },
-  { day: 5, title: "Family hike ⛰️",    who: "vacation" },
-  { day: 6, title: "Church 9am",        who: "family"   },
-  { day: 6, title: "Grocery run",       who: "honey"    },
+// ── LIVE GOOGLE CALENDAR ──
+const PROXY = 'https://corsproxy.io/?';
+
+const CALENDARS = [
+  { name: 'bryson',   who: 'bryson',   url: 'https://calendar.google.com/calendar/ical/a8400fae64a302fdf285c90b5401044b7163282568cf9870c9651c1d1cc35250%40group.calendar.google.com/private-bc62240faf797721ccfd8ca5a5052955/basic.ics' },
+  { name: 'kylee',    who: 'kylee',    url: 'https://calendar.google.com/calendar/ical/189c20bde4b914e351c2fbb9ce7ef3bc636abfd63a688987fd97b161aa9280e5%40group.calendar.google.com/private-145d2d8d7be6c5060e57878322e004d5/basic.ics' },
+  { name: 'lincoln',  who: 'lincoln',  url: 'https://calendar.google.com/calendar/ical/800cbc73fda099e1ceab270b9f27374f074a3daf562063cc17fc73925f9b6a1a%40group.calendar.google.com/private-483131df71667a9b74c917b127731417/basic.ics' },
+  { name: 'callahan', who: 'callahan', url: 'https://calendar.google.com/calendar/ical/b5c5d24deaf97378e4d39eb96c999a257972764d05fd591e904a8aead7d0a778%40group.calendar.google.com/private-f97fd28955dc1e9da78ab9c097beeaa2/basic.ics' },
+  { name: 'augusta',  who: 'augusta',  url: 'https://calendar.google.com/calendar/ical/b3e847400ad5f15cf14335f35075e8d2de82c890bbcca97184ff8cf8c24a9c8a%40group.calendar.google.com/private-20a30cc7521712b35e1b7be2588dab05/basic.ics' },
+  { name: 'family',   who: 'family',   url: 'https://calendar.google.com/calendar/ical/6acbc68161b472c57c564f604ece8a0586493c53fb8db7cadaed6f038af8ab49%40group.calendar.google.com/private-af493fa12761d91cfd2197f2a8dfd33c/basic.ics' },
+  { name: 'vacation', who: 'vacation', url: 'https://calendar.google.com/calendar/ical/f0d20fde03d564e0d5ed316f046ac3e8da0812e502e6adabde06d456ad940da5%40group.calendar.google.com/private-1756047f5174afeb48a2da3e4a49ebae/basic.ics' },
+  { name: 'honey',    who: 'honey',    url: 'https://calendar.google.com/calendar/ical/b65bc65ad6202188d1fda2a7148e52dd451224278d292126fc1282945c65848b%40group.calendar.google.com/private-692f59cd7358e3f75685bca17be7aefb/basic.ics' },
+  { name: 'holidays', who: 'family',   url: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics' },
 ];
 
-function buildWeekGrid() {
-  const today = new Date();
-  const dow = today.getDay();
+// Parse iCal text into event objects
+function parseICal(text, who) {
+  const events = [];
+  const lines  = text.replace(/\r\n /g, '').replace(/\r\n\t/g, '').split(/\r\n|\n/);
+  let ev = null;
+
+  for (const line of lines) {
+    if (line === 'BEGIN:VEVENT') { ev = {}; continue; }
+    if (line === 'END:VEVENT') {
+      if (ev && ev.start && ev.summary) {
+        ev.who = who;
+        events.push(ev);
+      }
+      ev = null;
+      continue;
+    }
+    if (!ev) continue;
+
+    if (line.startsWith('SUMMARY:'))       ev.summary = line.slice(8).trim();
+    if (line.startsWith('DTSTART'))        ev.start   = parseICalDate(line);
+    if (line.startsWith('DTEND'))          ev.end     = parseICalDate(line);
+    if (line.startsWith('DTSTART;VALUE=DATE:')) ev.allDay = true;
+  }
+  return events;
+}
+
+function parseICalDate(line) {
+  // DTSTART;TZID=...:20260315T090000  or  DTSTART:20260315  or  DTSTART;VALUE=DATE:20260315
+  const val = line.split(':').slice(1).join(':').trim();
+  if (val.length === 8) {
+    // All-day: YYYYMMDD
+    return new Date(
+      parseInt(val.slice(0,4)),
+      parseInt(val.slice(4,6)) - 1,
+      parseInt(val.slice(6,8))
+    );
+  }
+  // DateTime: YYYYMMDDTHHMMSSZ or YYYYMMDDTHHMMSS
+  const y  = val.slice(0,4), mo = val.slice(4,6), d = val.slice(6,8);
+  const h  = val.slice(9,11), mi = val.slice(11,13);
+  if (val.endsWith('Z')) {
+    return new Date(Date.UTC(+y,+mo-1,+d,+h,+mi));
+  }
+  return new Date(+y, +mo-1, +d, +h, +mi);
+}
+
+// Fetch all calendars and build the week grid
+async function fetchCalendars() {
+  const allEvents = [];
+
+  await Promise.allSettled(
+    CALENDARS.map(async cal => {
+      try {
+        const res  = await fetch(PROXY + encodeURIComponent(cal.url));
+        const text = await res.text();
+        const evs  = parseICal(text, cal.who);
+        allEvents.push(...evs);
+      } catch(e) {
+        console.warn(`Calendar fetch failed: ${cal.name}`, e);
+      }
+    })
+  );
+
+  buildWeekGrid(allEvents);
+}
+
+function buildWeekGrid(allEvents = []) {
+  const today     = new Date();
+  today.setHours(0,0,0,0);
+  const dow       = today.getDay();
   const weekStart = new Date(today);
   weekStart.setDate(today.getDate() - dow);
+  const weekEnd   = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+  weekEnd.setHours(23,59,59,999);
 
   const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const months   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  // Range label
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 6);
   document.getElementById('cal-range').textContent =
     `${months[weekStart.getMonth()]} ${weekStart.getDate()} – ${months[weekEnd.getMonth()]} ${weekEnd.getDate()}`;
 
@@ -1227,6 +1291,8 @@ function buildWeekGrid() {
   for (let i = 0; i < 7; i++) {
     const d = new Date(weekStart);
     d.setDate(weekStart.getDate() + i);
+    const dEnd = new Date(d);
+    dEnd.setHours(23,59,59,999);
     const isToday = d.toDateString() === today.toDateString();
 
     const col = document.createElement('div');
@@ -1237,25 +1303,49 @@ function buildWeekGrid() {
     hdr.innerHTML = `<div class="day-name">${dayNames[i]}</div><div class="day-num">${d.getDate()}</div>`;
     col.appendChild(hdr);
 
-    const dayEvents = SAMPLE_EVENTS.filter(e => e.day === i);
+    // Filter events that fall on this day
+    const dayEvents = allEvents.filter(ev => {
+      if (!ev.start) return false;
+      const s = new Date(ev.start); s.setHours(0,0,0,0);
+      const e = ev.end ? new Date(ev.end) : new Date(s);
+      e.setHours(23,59,59,999);
+      return s <= dEnd && e >= d;
+    });
+
+    // Sort by start time
+    dayEvents.sort((a,b) => new Date(a.start) - new Date(b.start));
+
     if (dayEvents.length === 0) {
       const none = document.createElement('div');
       none.className = 'no-events';
       none.textContent = 'Free';
       col.appendChild(none);
     } else {
-      dayEvents.forEach(ev => {
+      dayEvents.slice(0, 4).forEach(ev => { // max 4 per day to avoid overflow
         const pill = document.createElement('div');
         pill.className = `event-pill ev-${ev.who}`;
-        pill.textContent = ev.title;
+        pill.textContent = ev.summary;
+        pill.title = ev.summary; // tooltip on hover
         col.appendChild(pill);
       });
+      if (dayEvents.length > 4) {
+        const more = document.createElement('div');
+        more.className = 'no-events';
+        more.textContent = `+${dayEvents.length - 4} more`;
+        col.appendChild(more);
+      }
     }
 
     grid.appendChild(col);
   }
 }
-buildWeekGrid();
+
+// Initial build with empty events (shows structure immediately)
+buildWeekGrid([]);
+// Then fetch real events
+fetchCalendars();
+// Refresh every 30 minutes
+setInterval(fetchCalendars, 30 * 60 * 1000);
 
 // ── COUNTDOWN ──
 const TARGET    = new Date('2026-03-15T00:00:00');
