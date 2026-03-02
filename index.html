@@ -986,13 +986,20 @@
       </div>
     </div>
 
-    <!-- WIDGET (interchangeable) -->
+    <!-- WIDGET (auto-rotating) -->
     <div class="card widget">
-    <div class="widget-tabs">
-      <div class="widget-tab active" onclick="switchWidget('countdown', this)">Countdown</div>
-      <div class="widget-tab" onclick="switchWidget('quote', this)">Quote</div>
-      <div class="widget-tab" onclick="switchWidget('chores', this)">Chores</div>
-    </div>
+
+    <!-- Progress bar showing time until next widget -->
+    <div id="widget-progress-bar" style="
+      position: absolute;
+      bottom: 0; left: 0;
+      height: 3px;
+      background: var(--accent);
+      opacity: 0.4;
+      border-radius: 0 0 0 20px;
+      transition: width 1s linear;
+      z-index: 10;
+    "></div>
 
     <!-- Quote Panel -->
     <div class="widget-panel" id="panel-quote">
@@ -1008,32 +1015,32 @@
       <div class="widget-chores">
         <div class="section-label" style="margin-bottom:2px;">This Week's Chores</div>
         <div class="chore-row">
-          <div class="chore-kid" style="color:#2a6090;">Lincoln</div>
+          <div class="chore-kid" style="color:#c0392b;">Lincoln</div>
           <div class="chore-task">Take out trash</div>
-          <div class="chore-check" onclick="toggleChore(this)">✓</div>
+          <div class="chore-check done" onclick="toggleChore(this)">✓</div>
         </div>
         <div class="chore-row">
-          <div class="chore-kid" style="color:#2a6090;">Lincoln</div>
+          <div class="chore-kid" style="color:#c0392b;">Lincoln</div>
           <div class="chore-task">Mow the lawn</div>
           <div class="chore-check" onclick="toggleChore(this)"></div>
         </div>
         <div class="chore-row">
-          <div class="chore-kid" style="color:#9e4a1a;">Callahan</div>
+          <div class="chore-kid" style="color:#5c6bc0;">Callahan</div>
           <div class="chore-task">Clean bathroom</div>
           <div class="chore-check done" onclick="toggleChore(this)">✓</div>
         </div>
         <div class="chore-row">
-          <div class="chore-kid" style="color:#9e4a1a;">Callahan</div>
+          <div class="chore-kid" style="color:#5c6bc0;">Callahan</div>
           <div class="chore-task">Dishes after dinner</div>
           <div class="chore-check" onclick="toggleChore(this)"></div>
         </div>
         <div class="chore-row">
-          <div class="chore-kid" style="color:#8a6400;">Augusta</div>
+          <div class="chore-kid" style="color:#1e8a55;">Augusta</div>
           <div class="chore-task">Feed the dog</div>
           <div class="chore-check done" onclick="toggleChore(this)">✓</div>
         </div>
         <div class="chore-row">
-          <div class="chore-kid" style="color:#8a6400;">Augusta</div>
+          <div class="chore-kid" style="color:#1e8a55;">Augusta</div>
           <div class="chore-task">Tidy living room</div>
           <div class="chore-check" onclick="toggleChore(this)"></div>
         </div>
@@ -1043,9 +1050,9 @@
     <!-- Countdown Panel -->
     <div class="widget-panel active" id="panel-countdown">
       <div class="widget-countdown">
-        <div class="countdown-label">🌊 Spring Break</div>
-        <div class="countdown-title">Wimberley, Texas</div>
-        <div class="countdown-numbers">
+        <div class="countdown-label" id="cd-label">🌊 Spring Break</div>
+        <div class="countdown-title" id="cd-title">Wimberley, Texas</div>
+        <div class="countdown-numbers" id="cd-numbers">
           <div class="countdown-unit">
             <div class="countdown-num" id="cd-days">—</div>
             <div class="countdown-unit-label">Days</div>
@@ -1061,13 +1068,12 @@
             <div class="countdown-unit-label">Mins</div>
           </div>
         </div>
-        <div style="font-size:11px; color:var(--text-muted); margin-top:12px; letter-spacing:0.05em;">March 15 – 19, 2026 · 🏕️ 5 days of adventure</div>
+        <div style="font-size:11px; color:var(--text-muted); margin-top:12px; letter-spacing:0.05em;" id="cd-subtitle">March 15 – 19, 2026 · 🏕️ 5 days of adventure</div>
         <div id="cd-arrived" style="display:none; font-family:'Lora',serif; font-size:18px; font-style:italic; color:var(--accent); margin-top:8px;">We're here! Enjoy every moment. 🎉</div>
       </div>
     </div>
-  </div>
 
-  </div><!-- /bottom-bar -->
+  </div>
 
 </div><!-- /hub -->
 
@@ -1341,21 +1347,9 @@ fetchCalendars();
 // Refresh every 30 minutes
 setInterval(fetchCalendars, 30 * 60 * 1000);
 
-// ── LIVE MARKETS (Finnhub for BTC, Twelve Data for everything else) ──
-const FINNHUB_KEY   = 'd6igr6hr01qm7dc7f86gd6igr6hr01qm7dc7f870';
+// ── LIVE MARKETS (Finnhub for BTC, Twelve Data for Gold) ──
+const FINNHUB_KEY    = 'd6igr6hr01qm7dc7f86gd6igr6hr01qm7dc7f870';
 const TWELVEDATA_KEY = '2443cab0cf974bf98f338f2822f6b087';
-
-const TWELVEDATA_SYMBOLS = [
-  { symbol: 'SPX',     id: 'ES',  name: 'S&P 500',   fmt: 'comma' },
-  { symbol: 'DJI',     id: 'YM',  name: 'Dow',       fmt: 'comma' },
-  { symbol: 'DX',      id: 'DX',  name: 'Dollar',    fmt: 'two'   },
-  { symbol: 'XAU/USD', id: 'GC',  name: 'Gold',      fmt: 'comma' },
-  { symbol: 'WTI/USD', id: 'CL',  name: 'WTI Crude', fmt: 'two'   },
-  { symbol: 'ZC',      id: 'ZC',  name: 'Corn',      fmt: 'cents' },
-  { symbol: 'ZS',      id: 'ZS',  name: 'Soybeans',  fmt: 'cents' },
-  { symbol: 'KE',      id: 'KE',  name: 'HRW Wheat', fmt: 'cents' },
-  { symbol: 'MWE',     id: 'MWE', name: 'DNSW Wheat',fmt: 'cents' },
-];
 
 function formatPrice(price, fmt) {
   if (fmt === 'cents') {
@@ -1373,7 +1367,7 @@ function updateChip(id, price, change, pct, fmt) {
   const priceEl  = document.getElementById(`price-${id}`);
   const changeEl = document.getElementById(`change-${id}`);
   if (!priceEl || !changeEl || price == null) return;
-  priceEl.textContent  = formatPrice(price, fmt);
+  priceEl.textContent = formatPrice(price, fmt);
   const isUp   = change >= 0;
   const arrow  = isUp ? '▲' : '▼';
   const absChg = formatPrice(Math.abs(change), fmt);
@@ -1382,44 +1376,47 @@ function updateChip(id, price, change, pct, fmt) {
   changeEl.className   = `market-change ${isUp ? 'up' : 'down'}`;
 }
 
-async function fetchBTC() {
-  const url  = `https://finnhub.io/api/v1/quote?symbol=BINANCE:BTCUSDT&token=${FINNHUB_KEY}`;
-  const data = await fetch(url).then(r => r.json());
-  if (!data?.c) return;
-  updateChip('BTC', data.c, data.d, data.dp, 'dollar');
+function setPlaceholder(id, msg) {
+  const priceEl  = document.getElementById(`price-${id}`);
+  const changeEl = document.getElementById(`change-${id}`);
+  if (priceEl)  priceEl.textContent  = msg;
+  if (changeEl) { changeEl.textContent = 'Live on Pi'; changeEl.className = 'market-change'; changeEl.style.opacity = '0.4'; }
 }
 
-async function fetchTwelveData() {
-  const syms = TWELVEDATA_SYMBOLS.map(s => s.symbol).join(',');
-  const url  = `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(syms)}&apikey=${TWELVEDATA_KEY}`;
-  const data = await fetch(url).then(r => r.json());
+async function fetchBTC() {
+  try {
+    const url  = `https://finnhub.io/api/v1/quote?symbol=BINANCE:BTCUSDT&token=${FINNHUB_KEY}`;
+    const data = await fetch(url).then(r => r.json());
+    if (!data?.c) return;
+    updateChip('BTC', data.c, data.d, data.dp, 'dollar');
+  } catch(e) { console.warn('BTC fetch failed', e); }
+}
 
-  TWELVEDATA_SYMBOLS.forEach(m => {
-    // Twelve Data returns either a single object or keyed by symbol
-    const q = data[m.symbol] ?? data;
-    if (!q || q.code === 400 || q.code === 404) return;
-    const price  = parseFloat(q.close ?? q.price);
-    const prev   = parseFloat(q.previous_close);
-    const change = price - prev;
-    const pct    = (change / prev) * 100;
-    if (isNaN(price)) return;
-    updateChip(m.id, price, change, pct, m.fmt);
-  });
+async function fetchGold() {
+  try {
+    const url  = `https://api.twelvedata.com/quote?symbol=XAU/USD&apikey=${TWELVEDATA_KEY}`;
+    const data = await fetch(url).then(r => r.json());
+    if (!data?.close) return;
+    const price  = parseFloat(data.close);
+    const change = parseFloat(data.change);
+    const pct    = parseFloat(data.percent_change);
+    updateChip('GC', price, change, pct, 'comma');
+  } catch(e) { console.warn('Gold fetch failed', e); }
 }
 
 async function fetchMarkets() {
   document.getElementById('markets-time').textContent = 'Updating...';
-  try {
-    await Promise.allSettled([fetchBTC(), fetchTwelveData()]);
-    const now = new Date();
-    const h   = now.getHours() % 12 || 12;
-    const m   = String(now.getMinutes()).padStart(2,'0');
-    const ap  = now.getHours() >= 12 ? 'PM' : 'AM';
-    document.getElementById('markets-time').textContent = `Updated ${h}:${m} ${ap}`;
-  } catch(e) {
-    console.warn('Markets fetch error:', e);
-    document.getElementById('markets-time').textContent = 'Data unavailable — retrying';
-  }
+
+  // Set placeholders for symbols pending Pi setup
+  ['ZC','ZS','KE','MWE','ES','YM','DX','CL'].forEach(id => setPlaceholder(id, '—'));
+
+  await Promise.allSettled([fetchBTC(), fetchGold()]);
+
+  const now = new Date();
+  const h   = now.getHours() % 12 || 12;
+  const m   = String(now.getMinutes()).padStart(2,'0');
+  const ap  = now.getHours() >= 12 ? 'PM' : 'AM';
+  document.getElementById('markets-time').textContent = `BTC & Gold live · Full data on Pi · ${h}:${m} ${ap}`;
 }
 
 fetchMarkets();
@@ -1526,52 +1523,10 @@ async function fetchNews() {
 fetchNews();
 setInterval(fetchNews, 15 * 60 * 1000); // refresh every 15 min
 
-// ── COUNTDOWN ──
-const TARGET    = new Date('2026-03-15T00:00:00');
-const TRIP_END  = new Date('2026-03-19T23:59:59');
-
-function updateCountdown() {
-  const now = new Date();
-
-  // During the trip
-  if (now >= TARGET && now <= TRIP_END) {
-    document.querySelector('.countdown-numbers').style.display = 'none';
-    document.getElementById('cd-arrived').style.display = 'block';
-    return;
-  }
-
-  // After the trip
-  if (now > TRIP_END) {
-    document.getElementById('cd-days').textContent  = '00';
-    document.getElementById('cd-hours').textContent = '00';
-    document.getElementById('cd-mins').textContent  = '00';
-    return;
-  }
-
-  // Before the trip
-  const diff  = TARGET - now;
-  const days  = Math.floor(diff / 86400000);
-  const hours = Math.floor((diff % 86400000) / 3600000);
-  const mins  = Math.floor((diff % 3600000) / 60000);
-  document.getElementById('cd-days').textContent  = String(days).padStart(2,'0');
-  document.getElementById('cd-hours').textContent = String(hours).padStart(2,'0');
-  document.getElementById('cd-mins').textContent  = String(mins).padStart(2,'0');
-}
-setInterval(updateCountdown, 30000);
-updateCountdown();
-
 // ── CHORE TOGGLE ──
 function toggleChore(el) {
   el.classList.toggle('done');
   el.textContent = el.classList.contains('done') ? '✓' : '';
-}
-
-// ── WIDGET SWITCHER ──
-function switchWidget(name, tab) {
-  document.querySelectorAll('.widget-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.widget-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('panel-' + name).classList.add('active');
-  tab.classList.add('active');
 }
 
 // ── DAILY QUOTE ROTATION ──
@@ -1585,6 +1540,95 @@ const quotes = [
 const todayQuote = quotes[new Date().getDate() % quotes.length];
 document.getElementById('quote-text').textContent = todayQuote.text;
 document.getElementById('quote-author').textContent = '— ' + todayQuote.author;
+
+// ── AUTO-ROTATING WIDGET ──
+const WIDGET_ORDER    = ['countdown', 'quote', 'chores'];
+const WIDGET_DURATION = 30;
+let   widgetIndex     = 0;
+let   widgetSeconds   = 0;
+
+function showWidget(name) {
+  document.querySelectorAll('.widget-panel').forEach(p => {
+    p.style.opacity = '0';
+    p.style.transition = 'opacity 0.5s ease';
+  });
+  setTimeout(() => {
+    document.querySelectorAll('.widget-panel').forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById('panel-' + name);
+    if (panel) {
+      panel.classList.add('active');
+      panel.style.opacity = '0';
+      setTimeout(() => { panel.style.opacity = '1'; }, 20);
+    }
+  }, 500);
+}
+
+function tickWidget() {
+  widgetSeconds++;
+  const pct = (widgetSeconds / WIDGET_DURATION) * 100;
+  const bar = document.getElementById('widget-progress-bar');
+  if (bar) bar.style.width = pct + '%';
+  if (widgetSeconds >= WIDGET_DURATION) {
+    widgetSeconds = 0;
+    widgetIndex   = (widgetIndex + 1) % WIDGET_ORDER.length;
+    showWidget(WIDGET_ORDER[widgetIndex]);
+    if (bar) { bar.style.transition = 'none'; bar.style.width = '0%'; setTimeout(() => bar.style.transition = 'width 1s linear', 50); }
+  }
+}
+setInterval(tickWidget, 1000);
+
+// ── SMART COUNTDOWN ──
+const SPRING_START = new Date('2026-03-15T00:00:00');
+const SPRING_END   = new Date('2026-03-19T23:59:59');
+const SUMMER_START = new Date('2026-05-15T00:00:00');
+
+function updateCountdown() {
+  const now = new Date();
+
+  // During Spring Break
+  if (now >= SPRING_START && now <= SPRING_END) {
+    document.getElementById('cd-numbers').style.display = 'none';
+    document.getElementById('cd-arrived').style.display = 'block';
+    document.getElementById('cd-label').textContent     = '🌊 Spring Break';
+    document.getElementById('cd-title').textContent     = 'Wimberley, Texas';
+    document.getElementById('cd-subtitle').textContent  = 'Enjoy every moment! 🎉';
+    return;
+  }
+
+  // After Spring Break → Summer countdown
+  if (now > SPRING_END) {
+    document.getElementById('cd-arrived').style.display = 'none';
+    document.getElementById('cd-numbers').style.display = 'flex';
+    document.getElementById('cd-label').textContent     = '☀️ Summer Break';
+    document.getElementById('cd-title').textContent     = "School's Out!";
+    document.getElementById('cd-subtitle').textContent  = 'May 15, 2026 · Last day of school 🎒';
+    if (now >= SUMMER_START) {
+      document.getElementById('cd-days').textContent  = '🎉';
+      document.getElementById('cd-hours').textContent = '🎉';
+      document.getElementById('cd-mins').textContent  = '🎉';
+      document.getElementById('cd-subtitle').textContent = "School's out for summer! 🎉";
+      return;
+    }
+    const diff  = SUMMER_START - now;
+    document.getElementById('cd-days').textContent  = String(Math.floor(diff / 86400000)).padStart(2,'0');
+    document.getElementById('cd-hours').textContent = String(Math.floor((diff % 86400000) / 3600000)).padStart(2,'0');
+    document.getElementById('cd-mins').textContent  = String(Math.floor((diff % 3600000) / 60000)).padStart(2,'0');
+    return;
+  }
+
+  // Before Spring Break
+  document.getElementById('cd-arrived').style.display = 'none';
+  document.getElementById('cd-numbers').style.display = 'flex';
+  document.getElementById('cd-label').textContent     = '🌊 Spring Break';
+  document.getElementById('cd-title').textContent     = 'Wimberley, Texas';
+  document.getElementById('cd-subtitle').textContent  = 'March 15 – 19, 2026 · 🏕️ 5 days of adventure';
+  const diff  = SPRING_START - now;
+  document.getElementById('cd-days').textContent  = String(Math.floor(diff / 86400000)).padStart(2,'0');
+  document.getElementById('cd-hours').textContent = String(Math.floor((diff % 86400000) / 3600000)).padStart(2,'0');
+  document.getElementById('cd-mins').textContent  = String(Math.floor((diff % 3600000) / 60000)).padStart(2,'0');
+}
+setInterval(updateCountdown, 30000);
+updateCountdown();
 
 // ── PASSWORD LOCK ──
 // 🔑 CHANGE THIS to your family password:
