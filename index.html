@@ -1106,6 +1106,88 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
+// ── LIVE WEATHER ──
+const WX_KEY = '5640656a1aae6136886de392c0228508';
+const WX_ZIP = '79015';
+
+const WX_ICONS = {
+  Thunderstorm: '⛈️', Drizzle: '🌦️', Rain: '🌧️',
+  Snow: '❄️', Clear: '☀️', Clouds: '☁️',
+  Mist: '🌫️', Fog: '🌫️', Haze: '🌫️',
+  Dust: '🌪️', Sand: '🌪️', Squall: '🌬️', Tornado: '🌪️'
+};
+
+async function fetchWeather() {
+  try {
+    // Current conditions
+    const cur = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?zip=${WX_ZIP},us&units=imperial&appid=${WX_KEY}`
+    ).then(r => r.json());
+
+    const main  = cur.weather[0].main;
+    const desc  = cur.weather[0].description.replace(/\b\w/g, c => c.toUpperCase());
+    const icon  = WX_ICONS[main] || '🌡️';
+    const temp  = Math.round(cur.main.temp);
+    const feels = Math.round(cur.main.feels_like);
+    const hum   = cur.main.humidity;
+    const wind  = Math.round(cur.wind.speed);
+    const city  = cur.name;
+
+    document.getElementById('wx-icon').textContent     = icon;
+    document.getElementById('wx-temp').textContent     = temp;
+    document.getElementById('wx-cond').textContent     = desc;
+    document.getElementById('wx-feels').textContent    = feels + '°';
+    document.getElementById('wx-humidity').textContent = hum + '%';
+    document.getElementById('wx-wind').textContent     = wind + ' mph';
+    document.querySelector('.weather-location').textContent = '📍 ' + city + ', TX';
+
+    // UV Index
+    const uv = await fetch(
+      `https://api.openweathermap.org/data/2.5/uvi?lat=${cur.coord.lat}&lon=${cur.coord.lon}&appid=${WX_KEY}`
+    ).then(r => r.json());
+    document.getElementById('wx-uv').textContent = uv.value ?? '—';
+
+    // 5-day forecast (every 24h)
+    const fore = await fetch(
+      `https://api.openweathermap.org/data/2.5/forecast?zip=${WX_ZIP},us&units=imperial&cnt=40&appid=${WX_KEY}`
+    ).then(r => r.json());
+
+    // Group by day, pick noon reading
+    const dayMap = {};
+    fore.list.forEach(item => {
+      const d   = new Date(item.dt * 1000);
+      const key = d.toDateString();
+      if (!dayMap[key]) dayMap[key] = [];
+      dayMap[key].push(item);
+    });
+
+    const dayNames  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const foreRows  = document.querySelectorAll('.forecast-row');
+    const dayKeys   = Object.keys(dayMap).slice(1, 6); // skip today
+
+    dayKeys.forEach((key, i) => {
+      if (!foreRows[i]) return;
+      const readings = dayMap[key];
+      const high = Math.round(Math.max(...readings.map(r => r.main.temp_max)));
+      const low  = Math.round(Math.min(...readings.map(r => r.main.temp_min)));
+      const noon = readings.find(r => new Date(r.dt * 1000).getHours() === 12) || readings[0];
+      const fIcon = WX_ICONS[noon.weather[0].main] || '🌡️';
+      const dName = dayNames[new Date(key).getDay()];
+
+      foreRows[i].querySelector('.forecast-day').textContent  = dName;
+      foreRows[i].querySelector('.forecast-icon').textContent = fIcon;
+      foreRows[i].querySelector('.forecast-temps').innerHTML  =
+        `${high}° <span>/ ${low}°</span>`;
+    });
+
+  } catch(e) {
+    console.warn('Weather fetch failed:', e);
+  }
+}
+
+fetchWeather();
+setInterval(fetchWeather, 10 * 60 * 1000); // refresh every 10 min
+
 // ── WEEK GRID ──
 const SAMPLE_EVENTS = [
   { day: 0, title: "Soccer practice",   who: "lincoln"  },
