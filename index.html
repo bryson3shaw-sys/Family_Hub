@@ -1676,12 +1676,12 @@ async function fetchTeamGame(team) {
 
     if (state === 'in') {
       const period = comp?.status?.displayClock ?? '';
-      scoreStr   = `${dallas?.score ?? '0'} – ${opponent?.score ?? '0'}`;
+      scoreStr   = `${dallas?.score?.displayValue ?? dallas?.score ?? '0'} – ${opponent?.score?.displayValue ?? opponent?.score ?? '0'}`;
       gameInfo   = `🔴 LIVE ${period} · ${isHome ? 'vs' : '@'} ${opponent?.team?.abbreviation}`;
       scoreClass = 'live';
     } else if (state === 'post') {
-      const dScore = parseInt(dallas?.score ?? 0);
-      const oScore = parseInt(opponent?.score ?? 0);
+      const dScore = parseInt(dallas?.score?.displayValue ?? dallas?.score ?? 0);
+      const oScore = parseInt(opponent?.score?.displayValue ?? opponent?.score ?? 0);
       scoreStr   = `${dScore} – ${oScore}`;
       scoreClass = dScore > oScore ? 'win' : 'loss';
       const dateStr = gameDate.toLocaleDateString('en-US', {month:'short', day:'numeric'});
