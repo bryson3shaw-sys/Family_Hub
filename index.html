@@ -780,8 +780,61 @@
     border-color: var(--text-primary);
   }
 
-  .widget-panel { display: none; height: 100%; }
-  .widget-panel.active { display: flex; flex-direction: column; }
+  /* Widget: Sports */
+  .widget-sports {
+    padding: 14px 18px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .sport-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+
+  .sport-team-logo {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .sport-team-info { flex: 1; min-width: 0; }
+
+  .sport-team-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .sport-game-info {
+    font-size: 10px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+  }
+
+  .sport-score {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .sport-score.win  { color: #2a7a4f; }
+  .sport-score.loss { color: #c0392b; }
+  .sport-score.live { color: var(--sky); }
 
 </style>
 </head>
@@ -1044,6 +1097,17 @@
           <div class="chore-task">Tidy living room</div>
           <div class="chore-check" onclick="toggleChore(this)"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- Sports Panel -->
+    <div class="widget-panel" id="panel-sports">
+      <div class="widget-sports">
+        <div class="section-label" style="margin-bottom:6px;">Dallas Teams</div>
+        <div id="sports-list" style="display:flex; flex-direction:column; gap:6px; flex:1; overflow:hidden;">
+          <div style="font-size:11px; color:var(--text-muted); font-style:italic;">Loading scores...</div>
+        </div>
+        <div style="font-size:9px; color:var(--text-muted); font-style:italic; margin-top:4px;" id="sports-updated"></div>
       </div>
     </div>
 
@@ -1529,20 +1593,134 @@ function toggleChore(el) {
   el.textContent = el.classList.contains('done') ? '✓' : '';
 }
 
-// ── DAILY QUOTE ROTATION ──
-const quotes = [
-  { text: "The most important thing in the world is family and love.", author: "John Wooden" },
-  { text: "Family is not an important thing. It's everything.", author: "Michael J. Fox" },
-  { text: "In family life, love is the oil that eases friction.", author: "Friedrich Nietzsche" },
-  { text: "Other things may change us, but we start and end with family.", author: "Anthony Brandt" },
-  { text: "The love of family is life's greatest blessing.", author: "Unknown" },
+// ── DAILY QUOTE (ZenQuotes API) ──
+async function fetchQuote() {
+  try {
+    const proxy = 'https://corsproxy.io/?' + encodeURIComponent('https://zenquotes.io/api/today');
+    const data  = await fetch(proxy).then(r => r.json());
+    if (data?.[0]?.q && data?.[0]?.a) {
+      document.getElementById('quote-text').textContent   = data[0].q;
+      document.getElementById('quote-author').textContent = '— ' + data[0].a;
+    }
+  } catch(e) {
+    // Fallback quotes if API fails
+    const fallback = [
+      { text: "The most important thing in the world is family and love.", author: "John Wooden" },
+      { text: "Family is not an important thing. It's everything.", author: "Michael J. Fox" },
+      { text: "Other things may change us, but we start and end with family.", author: "Anthony Brandt" },
+      { text: "The love of family is life's greatest blessing.", author: "Unknown" },
+      { text: "In family life, love is the oil that eases friction.", author: "Friedrich Nietzsche" },
+    ];
+    const q = fallback[new Date().getDate() % fallback.length];
+    document.getElementById('quote-text').textContent   = q.text;
+    document.getElementById('quote-author').textContent = '— ' + q.author;
+  }
+}
+fetchQuote();
+
+// ── LIVE SPORTS (ESPN public API) ──
+const DALLAS_TEAMS = [
+  { name: 'Mavericks', logo: '🏀', espnId: '6',   league: 'nba'  },
+  { name: 'Cowboys',   logo: '🏈', espnId: '6',   league: 'nfl'  },
+  { name: 'Rangers',   logo: '⚾', espnId: '13',  league: 'mlb'  },
+  { name: 'Stars',     logo: '🏒', espnId: '25',  league: 'nhl'  },
 ];
-const todayQuote = quotes[new Date().getDate() % quotes.length];
-document.getElementById('quote-text').textContent = todayQuote.text;
-document.getElementById('quote-author').textContent = '— ' + todayQuote.author;
+
+async function fetchTeamGame(team) {
+  try {
+    const url   = `https://site.api.espn.com/apis/site/v2/sports/${getESPNSport(team.league)}/scoreboard?team=${team.espnId}`;
+    const proxy = 'https://corsproxy.io/?' + encodeURIComponent(url);
+    const data  = await fetch(proxy).then(r => r.json());
+    const events = data?.events || [];
+    if (events.length === 0) return null;
+
+    // Find most recent or upcoming game
+    const event = events[0];
+    const comp  = event?.competitions?.[0];
+    const status = comp?.status?.type;
+    const home  = comp?.competitors?.find(c => c.homeAway === 'home');
+    const away  = comp?.competitors?.find(c => c.homeAway === 'away');
+    const isDallas = (t) => t?.team?.displayName?.includes('Dallas') || t?.team?.displayName?.includes(team.name);
+    const dallas = isDallas(home) ? home : away;
+    const opponent = isDallas(home) ? away : home;
+    const isHome = isDallas(home);
+
+    const gameDate = new Date(event.date);
+    const now = new Date();
+    const isToday = gameDate.toDateString() === now.toDateString();
+    const isLive  = status?.state === 'in';
+    const isFinal = status?.state === 'post';
+
+    let scoreStr = '', gameInfo = '', scoreClass = '';
+
+    if (isLive) {
+      scoreStr  = `${dallas?.score ?? '0'} - ${opponent?.score ?? '0'}`;
+      gameInfo  = `🔴 LIVE · vs ${opponent?.team?.abbreviation}`;
+      scoreClass = 'live';
+    } else if (isFinal) {
+      const dScore = parseInt(dallas?.score ?? 0);
+      const oScore = parseInt(opponent?.score ?? 0);
+      scoreStr   = `${dScore} - ${oScore}`;
+      scoreClass = dScore > oScore ? 'win' : 'loss';
+      gameInfo   = `Final · ${isHome ? 'vs' : '@'} ${opponent?.team?.abbreviation}`;
+    } else {
+      // Upcoming
+      const timeStr = isToday ? gameDate.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'}) : gameDate.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+      scoreStr  = timeStr;
+      gameInfo  = `${isHome ? 'vs' : '@'} ${opponent?.team?.abbreviation ?? 'TBD'}`;
+      scoreClass = '';
+    }
+
+    return { name: team.name, logo: team.logo, scoreStr, gameInfo, scoreClass };
+  } catch(e) {
+    console.warn(`Sports fetch failed: ${team.name}`, e);
+    return null;
+  }
+}
+
+function getESPNSport(league) {
+  const map = { nba: 'basketball/nba', nfl: 'football/nfl', mlb: 'baseball/mlb', nhl: 'hockey/nhl' };
+  return map[league] || league;
+}
+
+async function fetchSports() {
+  const results = await Promise.allSettled(DALLAS_TEAMS.map(fetchTeamGame));
+  const list = document.getElementById('sports-list');
+  if (!list) return;
+
+  const rows = results
+    .filter(r => r.status === 'fulfilled' && r.value)
+    .map(r => r.value);
+
+  if (rows.length === 0) {
+    list.innerHTML = '<div style="font-size:11px;color:var(--text-muted);font-style:italic;">No games found</div>';
+    return;
+  }
+
+  list.innerHTML = rows.map(r => `
+    <div class="sport-row">
+      <div class="sport-team-logo">${r.logo}</div>
+      <div class="sport-team-info">
+        <div class="sport-team-name">${r.name}</div>
+        <div class="sport-game-info">${r.gameInfo}</div>
+      </div>
+      <div class="sport-score ${r.scoreClass}">${r.scoreStr}</div>
+    </div>
+  `).join('');
+
+  const now = new Date();
+  const h = now.getHours() % 12 || 12;
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const ap = now.getHours() >= 12 ? 'PM' : 'AM';
+  const el = document.getElementById('sports-updated');
+  if (el) el.textContent = `Updated ${h}:${m} ${ap}`;
+}
+
+fetchSports();
+setInterval(fetchSports, 5 * 60 * 1000);
 
 // ── AUTO-ROTATING WIDGET ──
-const WIDGET_ORDER    = ['countdown', 'quote', 'chores'];
+const WIDGET_ORDER    = ['countdown', 'sports', 'quote'];
 const WIDGET_DURATION = 30;
 let   widgetIndex     = 0;
 let   widgetSeconds   = 0;
