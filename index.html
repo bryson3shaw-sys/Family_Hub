@@ -1829,18 +1829,25 @@ setInterval(updateCountdown, 30000);
 updateCountdown();
 
 // ── PASSWORD LOCK ──
-// 🔑 CHANGE THIS to your family password:
-const FAMILY_PASSWORD = 'wimberley2026';
+const FAMILY_PASSWORD  = 'wimberley2026';
+const TRIVIA_PASSWORD  = 'trivia';
 
 function unlockHub() {
   const input = document.getElementById('lock-input');
   const error = document.getElementById('lock-error');
-  if (input.value === FAMILY_PASSWORD) {
-    // Remember unlock for this session
-    sessionStorage.setItem('hub_unlocked', 'yes');
+  const val   = input.value.trim().toLowerCase();
+
+  if (val === FAMILY_PASSWORD.toLowerCase()) {
+    sessionStorage.setItem('hub_unlocked', 'hub');
     const lock = document.getElementById('lock-screen');
     lock.classList.add('hide');
     setTimeout(() => lock.style.display = 'none', 500);
+  } else if (val === TRIVIA_PASSWORD) {
+    sessionStorage.setItem('hub_unlocked', 'trivia');
+    window.location.href = 'trivia.html';
+  } else if (val === 'kids rule') {
+    sessionStorage.setItem('hub_unlocked', 'kids');
+    window.location.href = 'kids.html';
   } else {
     input.classList.add('error');
     error.textContent = 'Incorrect password — try again.';
@@ -1850,8 +1857,11 @@ function unlockHub() {
 }
 
 // Auto-unlock if already authenticated this session
-if (sessionStorage.getItem('hub_unlocked') === 'yes') {
+const unlockState = sessionStorage.getItem('hub_unlocked');
+if (unlockState === 'hub') {
   document.getElementById('lock-screen').style.display = 'none';
+} else if (unlockState === 'trivia') {
+  window.location.href = 'trivia.html';
 }
 </script>
 </body>
