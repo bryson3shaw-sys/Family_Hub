@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kids Rule!</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #e8f4fd;
+  --blue: #4a90d9;
+  --blue-dark: #2e6faa;
+  --orange: #f5a623;
+  --orange-dark: #d4881a;
+  --green: #5cb85c;
+  --green-dark: #449944;
+  --red: #e8394a;
+  --purple: #9b59b6;
+  --yellow: #f5e642;
+  --pink: #e84daa;
+  --white: #ffffff;
+  --text: #1a2a3a;
+  --text-light: #5a7a9a;
+  --card: rgba(255,255,255,0.9);
+  --radius: 24px;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg);
+  font-family: 'Nunito', sans-serif;
+  color: var(--text);
+  overflow: hidden;
+}
+
+body {
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(74,144,217,0.12) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(245,166,35,0.1) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(92,184,92,0.06) 0%, transparent 60%);
+}
+
+/* ── FLOATING DECORATIONS ── */
+.deco {
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  font-size: 32px;
+  opacity: 0.18;
+  animation: float 6s ease-in-out infinite;
+}
+.deco:nth-child(1)  { top: 5%;  left: 3%;  animation-delay: 0s;   font-size: 28px; }
+.deco:nth-child(2)  { top: 12%; right: 5%; animation-delay: 1s;   font-size: 36px; }
+.deco:nth-child(3)  { top: 80%; left: 2%;  animation-delay: 2s;   font-size: 24px; }
+.deco:nth-child(4)  { top: 75%; right: 3%; animation-delay: 0.5s; font-size: 30px; }
+.deco:nth-child(5)  { top: 45%; left: 1%;  animation-delay: 3s;   font-size: 20px; }
+.deco:nth-child(6)  { top: 40%; right: 1%; animation-delay: 1.5s; font-size: 26px; }
+
+@keyframes float {
+  0%,100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-12px) rotate(5deg); }
+}
+
+/* ── MAIN LAYOUT ── */
+.hub {
+  position: relative;
+  z-index: 1;
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  padding: 20px;
+  gap: 16px;
+}
+
+/* ── MAIN TRIVIA AREA ── */
+.trivia-main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+}
+
+/* Header */
+.trivia-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kids-logo {
+  font-family: 'Fredoka One', sans-serif;
+  font-size: 32px;
+  color: var(--blue-dark);
+  line-height: 1;
+}
+
+.kids-logo span { color: var(--orange); }
+
+.cat-pill {
+  font-family: 'Fredoka One', sans-serif;
+  font-size: 16px;
+  padding: 8px 20px;
+  border-radius: 30px;
+  border: 3px solid currentColor;
+  transition: all 0.3s ease;
+}
+
+.cat-math     { color: #2e6faa; background: rgba(46,111,170,0.12); }
+.cat-letters  { color: #9b59b6; background: rgba(155,89,182,0.12); }
+.cat-starwars { color: #c9aa71; background: rgba(201,170,113,0.12); }
+.cat-minecraft{ color: #5d8a2a; background: rgba(93,138,42,0.12);  }
+.cat-disney   { color: #e84daa; background: rgba(232,77,170,0.12); }
+.cat-mario    { color: #e8394a; background: rgba(232,57,74,0.12);  }
+.cat-animals  { color: #27ae60; background: rgba(39,174,96,0.12);  }
+
+/* Question card */
+.question-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 3px solid rgba(74,144,217,0.2);
+  box-shadow: 0 8px 32px rgba(74,144,217,0.1);
+  padding: 28px 36px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-height: 0;
+}
+
+.question-emoji {
+  font-size: 72px;
+  margin-bottom: 12px;
+  animation: bounce 1s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+
+.question-text {
+  font-family: 'Fredoka One', sans-serif;
+  font-size: clamp(32px, 4.5vw, 60px);
+  color: var(--text);
+  line-height: 1.25;
+  animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Answer buttons */
+.answers-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.answer-btn {
+  background: var(--card);
+  border-radius: 20px;
+  border: 3px solid transparent;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: default;
+  transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.answer-btn:nth-child(1) { animation-delay: 0.1s; border-color: rgba(74,144,217,0.3);  background: rgba(74,144,217,0.06); }
+.answer-btn:nth-child(2) { animation-delay: 0.15s; border-color: rgba(245,166,35,0.3); background: rgba(245,166,35,0.06); }
+.answer-btn:nth-child(3) { animation-delay: 0.2s; border-color: rgba(92,184,92,0.3);   background: rgba(92,184,92,0.06);  }
+.answer-btn:nth-child(4) { animation-delay: 0.25s; border-color: rgba(155,89,182,0.3); background: rgba(155,89,182,0.06); }
+
+.answer-letter {
+  font-family: 'Fredoka One', sans-serif;
+  font-size: 24px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: white;
+}
+
+.answer-btn:nth-child(1) .answer-letter { background: var(--blue); }
+.answer-btn:nth-child(2) .answer-letter { background: var(--orange); }
+.answer-btn:nth-child(3) .answer-letter { background: var(--green); }
+.answer-btn:nth-child(4) .answer-letter { background: var(--purple); }
+
+.answer-text {
+  font-family: 'Fredoka One', sans-serif;
+  font-size: clamp(22px, 2.5vw, 34px);
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.answer-btn.eliminated {
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
+}
+
+.answer-btn.correct {
+  background: rgba(92,184,92,0.2) !important;
+  border-color: var(--green) !important;
+  transform: scale(1.04);
+}
+
+.answer-btn.correct .answer-letter { background: var(--green) !important; }
+.answer-btn.correct .answer-text   { color: var(--green-dark); }
+
+/* Timer */
+.timer-wrap {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 12px 20px;
+  border: 3px solid rgba(74,144,217,0.15);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+
+.timer-bar-bg {
+  width: 100%;
+  height: 14px;
+  background: rgba(0,0,0,0.06);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.timer-bar {
+  height: 100%;
+  border-radius: 7px;
+  background: linear-gradient(90deg, #4a90d9, #7bc6f5);
+  transition: width 1s linear, background 0.5s ease;
+  width: 100%;
+}
+
+.timer-bar.warning {
+  background: linear-gradient(90deg, #e8394a, #f5623a);
+}
+
+.timer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.timer-seconds {
+  font-family: 'Fredoka One', sans-serif;
+  font-size: 28px;
+  color: var(--blue);
+  line-height: 1;
+  transition: color 0.3s;
+}
+
+.timer-seconds.warning { color: var(--red); }
+
+.next-hint {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-light);
+  letter-spacing: 0.05em;
+}
+
+/* ── CELEBRATION OVERLAY ── */
+.celebrate {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.celebrate.show { opacity: 1; }
+
+.celebrate-card {
+  background: linear-gradient(135deg, var(--green), #3aaa5a);
+  border-radius: 32px;
+  padding: 32px 56px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  transform: scale(0.7);
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.celebrate.show .celebrate-card { transform: scale(1); }
+
+.celebrate-emoji { font-size: 64px; }
+.celebrate-text  {
+  font-family: 'Fredoka One', sans-serif;
+  font-size: 48px;
+  color: white;
+  line-height: 1.1;
+  margin-top: 8px;
+}
+
+/* Confetti */
+.confetti-piece {
+  position: fixed;
+  width: 10px; height: 10px;
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 99;
+  animation: confettiFall 3s ease-in forwards;
+}
+
+@keyframes confettiFall {
+  0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- Floating decorations -->
+<div class="deco">⭐</div>
+<div class="deco">🌈</div>
+<div class="deco">🎮</div>
+<div class="deco">🌟</div>
+<div class="deco">🎯</div>
+<div class="deco">🚀</div>
+
+<div class="hub">
+
+  <!-- ── TRIVIA MAIN ── -->
+  <div class="trivia-main">
+
+    <div class="trivia-header">
+      <div class="kids-logo">Kids<span> Rule!</span> 🎉</div>
+      <div class="cat-pill cat-math" id="cat-pill">🔢 Math</div>
+    </div>
+
+    <div class="question-card">
+      <div class="question-emoji" id="q-emoji">🤔</div>
+      <div class="question-text" id="question-text">Get ready...</div>
+    </div>
+
+    <div class="answers-grid" id="answers-grid"></div>
+
+    <div class="timer-wrap">
+      <div class="timer-bar-bg">
+        <div class="timer-bar" id="timer-bar"></div>
+      </div>
+      <div class="timer-row">
+        <div class="timer-seconds" id="timer-seconds">30</div>
+        <div class="next-hint" id="next-hint">⏱ seconds left</div>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /hub -->
+
+<!-- Celebration overlay -->
+<div class="celebrate" id="celebrate">
+  <div class="celebrate-card">
+    <div class="celebrate-emoji" id="cel-emoji">🎉</div>
+    <div class="celebrate-text" id="cel-text">That's right!</div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// KIDS QUESTION BANK
+// ══════════════════════════════════════════════
+const QUESTIONS = [
+
+  // ── MATH ──
+  { cat:'math', emoji:'🔢', q:'What is 2 + 2?', a:['4','3','5','6'], correct:0 },
+  { cat:'math', emoji:'➕', q:'What is 5 + 3?', a:['8','6','7','9'], correct:0 },
+  { cat:'math', emoji:'🔢', q:'What is 10 - 4?', a:['6','5','7','8'], correct:0 },
+  { cat:'math', emoji:'➕', q:'What is 3 + 7?', a:['10','8','9','11'], correct:0 },
+  { cat:'math', emoji:'🔢', q:'What is 6 × 2?', a:['12','10','14','8'], correct:0 },
+  { cat:'math', emoji:'➕', q:'What is 15 - 6?', a:['9','8','7','10'], correct:0 },
+  { cat:'math', emoji:'🔢', q:'What is 4 × 3?', a:['12','9','15','8'], correct:0 },
+  { cat:'math', emoji:'➕', q:'What is 20 ÷ 4?', a:['5','4','6','8'], correct:0 },
+  { cat:'math', emoji:'🔢', q:'What is 7 + 8?', a:['15','13','14','16'], correct:0 },
+  { cat:'math', emoji:'➕', q:'What is 9 × 3?', a:['27','24','21','30'], correct:0 },
+  { cat:'math', emoji:'🔢', q:'What is 100 - 25?', a:['75','70','80','65'], correct:0 },
+  { cat:'math', emoji:'➕', q:'How many sides does a triangle have?', a:['3','4','2','5'], correct:0 },
+  { cat:'math', emoji:'🔢', q:'What is 5 × 5?', a:['25','20','30','15'], correct:0 },
+  { cat:'math', emoji:'➕', q:'What is 18 ÷ 3?', a:['6','5','7','9'], correct:0 },
+  { cat:'math', emoji:'🔢', q:'If you have 10 apples and eat 3, how many are left?', a:['7','6','8','9'], correct:0 },
+  { cat:'math', emoji:'➕', q:'What is 11 + 11?', a:['22','20','21','23'], correct:0 },
+  { cat:'math', emoji:'🔢', q:'How many minutes are in one hour?', a:['60','30','45','90'], correct:0 },
+  { cat:'math', emoji:'➕', q:'What is 8 × 4?', a:['32','28','36','24'], correct:0 },
+  { cat:'math', emoji:'🔢', q:'What is half of 20?', a:['10','8','12','15'], correct:0 },
+  { cat:'math', emoji:'➕', q:'How many days are in a week?', a:['7','5','6','8'], correct:0 },
+
+  // ── LETTERS & WORDS ──
+  { cat:'letters', emoji:'🔤', q:'What letter comes after D in the alphabet?', a:['E','F','C','G'], correct:0 },
+  { cat:'letters', emoji:'📝', q:'How many letters are in the word CAT?', a:['3','2','4','5'], correct:0 },
+  { cat:'letters', emoji:'🔤', q:'What is the first letter of the alphabet?', a:['A','B','C','Z'], correct:0 },
+  { cat:'letters', emoji:'📝', q:'Which word rhymes with CAKE?', a:['Lake','Book','Dog','Run'], correct:0 },
+  { cat:'letters', emoji:'🔤', q:'How many vowels are in the word ELEPHANT?', a:['3','2','4','5'], correct:0 },
+  { cat:'letters', emoji:'📝', q:'What letter comes before Z in the alphabet?', a:['Y','X','W','V'], correct:0 },
+  { cat:'letters', emoji:'🔤', q:'Which word is spelled correctly?', a:['Happy','Hapy','Happi','Hapey'], correct:0 },
+  { cat:'letters', emoji:'📝', q:'How many letters are in the alphabet?', a:['26','24','28','25'], correct:0 },
+  { cat:'letters', emoji:'🔤', q:'What is the last letter of the alphabet?', a:['Z','Y','X','W'], correct:0 },
+  { cat:'letters', emoji:'📝', q:'Which word rhymes with STAR?', a:['Car','Tree','Dog','Ball'], correct:0 },
+  { cat:'letters', emoji:'🔤', q:'What letter makes the "sss" sound in SNAKE?', a:['S','C','Z','X'], correct:0 },
+  { cat:'letters', emoji:'📝', q:'How many letters are in the word RAINBOW?', a:['7','6','8','5'], correct:0 },
+  { cat:'letters', emoji:'🔤', q:'Which of these is a vowel?', a:['O','B','C','D'], correct:0 },
+  { cat:'letters', emoji:'📝', q:'What word means the opposite of HOT?', a:['Cold','Fast','Big','Hard'], correct:0 },
+  { cat:'letters', emoji:'🔤', q:'Which word rhymes with BLUE?', a:['True','Red','Green','Pink'], correct:0 },
+
+  // ── STAR WARS ──
+  { cat:'starwars', emoji:'⚔️', q:'What color is Luke Skywalker\'s lightsaber?', a:['Green','Red','Blue','Purple'], correct:0 },
+  { cat:'starwars', emoji:'🚀', q:'What is the name of Han Solo\'s spaceship?', a:['Millennium Falcon','X-Wing','Death Star','TIE Fighter'], correct:0 },
+  { cat:'starwars', emoji:'⚔️', q:'What is Baby Yoda\'s real name in The Mandalorian?', a:['Grogu','Yoda','Dooku','Ezra'], correct:0 },
+  { cat:'starwars', emoji:'🚀', q:'What are the bad guys in Star Wars called?', a:['The Empire','The Alliance','The Jedi','The Republic'], correct:0 },
+  { cat:'starwars', emoji:'⚔️', q:'What sound does R2-D2 make?', a:['Beeps & whistles','Bark','Roar','Meow'], correct:0 },
+  { cat:'starwars', emoji:'🚀', q:'Who is Luke Skywalker\'s father?', a:['Darth Vader','Obi-Wan Kenobi','Han Solo','Yoda'], correct:0 },
+  { cat:'starwars', emoji:'⚔️', q:'What is the name of the big furry creature that is Han Solo\'s friend?', a:['Chewbacca','Ewok','Wampa','Rancor'], correct:0 },
+  { cat:'starwars', emoji:'🚀', q:'What planet did Luke Skywalker grow up on?', a:['Tatooine','Alderaan','Dagobah','Hoth'], correct:0 },
+  { cat:'starwars', emoji:'⚔️', q:'What color is Darth Vader\'s lightsaber?', a:['Red','Blue','Green','Yellow'], correct:0 },
+  { cat:'starwars', emoji:'🚀', q:'What does Yoda use to fight with?', a:['A lightsaber','A blaster','A sword','His hands'], correct:0 },
+  { cat:'starwars', emoji:'⚔️', q:'What are the good guys who use the Force called?', a:['Jedi','Sith','Rebels','Clones'], correct:0 },
+  { cat:'starwars', emoji:'🚀', q:'What is the name of the big round weapon that can destroy planets?', a:['Death Star','Star Destroyer','Eclipse','Executor'], correct:0 },
+
+  // ── MINECRAFT ──
+  { cat:'minecraft', emoji:'⛏️', q:'What do you use to mine in Minecraft?', a:['A pickaxe','A sword','A shovel','An axe'], correct:0 },
+  { cat:'minecraft', emoji:'🟫', q:'What is the rarest ore in Minecraft?', a:['Diamond','Gold','Iron','Emerald'], correct:0 },
+  { cat:'minecraft', emoji:'⛏️', q:'What is the main bad guy boss in Minecraft called?', a:['The Ender Dragon','The Wither','The Creeper','The Zombie'], correct:0 },
+  { cat:'minecraft', emoji:'🟫', q:'What happens when a Creeper gets close to you?', a:['It explodes','It runs away','It shoots arrows','It throws fireballs'], correct:0 },
+  { cat:'minecraft', emoji:'⛏️', q:'What do you need to make a crafting table in Minecraft?', a:['4 wood planks','2 sticks','Stone blocks','Iron ingots'], correct:0 },
+  { cat:'minecraft', emoji:'🟫', q:'What animal gives you wool in Minecraft?', a:['Sheep','Cow','Pig','Chicken'], correct:0 },
+  { cat:'minecraft', emoji:'⛏️', q:'What is the dark scary dimension in Minecraft called?', a:['The Nether','The End','The Dark World','The Void'], correct:0 },
+  { cat:'minecraft', emoji:'🟫', q:'What do you eat in Minecraft to restore health?', a:['Food like bread or meat','Grass','Dirt','Rocks'], correct:0 },
+  { cat:'minecraft', emoji:'⛏️', q:'What color is a Creeper?', a:['Green','Red','Blue','Black'], correct:0 },
+  { cat:'minecraft', emoji:'🟫', q:'How many blocks tall is a standard Minecraft character (Steve)?', a:['2 blocks','1 block','3 blocks','4 blocks'], correct:0 },
+  { cat:'minecraft', emoji:'⛏️', q:'What mob drops a saddle in Minecraft?', a:['Ravager','Horse','Pig','Zombie'], correct:0 },
+  { cat:'minecraft', emoji:'🟫', q:'What do you need to make a sword in Minecraft?', a:['2 of a material + 1 stick','3 sticks','4 iron ingots','2 diamonds'], correct:0 },
+
+  // ── DISNEY / PIXAR ──
+  { cat:'disney', emoji:'🏰', q:'What is the name of the snowman in Frozen?', a:['Olaf','Sven','Hans','Kristoff'], correct:0 },
+  { cat:'disney', emoji:'🎬', q:'In Finding Nemo, what kind of fish is Nemo?', a:['Clownfish','Goldfish','Bluefish','Starfish'], correct:0 },
+  { cat:'disney', emoji:'🏰', q:'What is the name of the toy cowboy in Toy Story?', a:['Woody','Buzz','Rex','Hamm'], correct:0 },
+  { cat:'disney', emoji:'🎬', q:'What color is the Pixar lamp that hops at the start of movies?', a:['White','Yellow','Blue','Red'], correct:0 },
+  { cat:'disney', emoji:'🏰', q:'In The Lion King, what is Simba\'s dad\'s name?', a:['Mufasa','Scar','Timon','Pumba'], correct:0 },
+  { cat:'disney', emoji:'🎬', q:'What is the name of the fish who is Nemo\'s dad?', a:['Marlin','Dory','Gill','Bloat'], correct:0 },
+  { cat:'disney', emoji:'🏰', q:'What does WALL-E collect?', a:['Trash / junk','Rocks','Food','Water'], correct:0 },
+  { cat:'disney', emoji:'🎬', q:'In Cars, what is Lightning McQueen\'s racing number?', a:['95','42','86','51'], correct:0 },
+  { cat:'disney', emoji:'🏰', q:'What are the tiny invisible creatures in Monsters Inc. called?', a:['Kids / children','Boos','Screamers','Humans'], correct:0 },
+  { cat:'disney', emoji:'🎬', q:'In Up, what does Carl use to make his house fly?', a:['Balloons','A rocket','A jet engine','Magic'], correct:0 },
+  { cat:'disney', emoji:'🏰', q:'What is the name of Moana\'s island?', a:['Motunui','Maui','Hawaii','Lalotai'], correct:0 },
+  { cat:'disney', emoji:'🎬', q:'In Inside Out, what color is the emotion Joy?', a:['Yellow','Blue','Red','Green'], correct:0 },
+  { cat:'disney', emoji:'🏰', q:'What kind of animal is Simba in The Lion King?', a:['Lion','Tiger','Cheetah','Leopard'], correct:0 },
+  { cat:'disney', emoji:'🎬', q:'What is the name of Elsa\'s sister in Frozen?', a:['Anna','Moana','Rapunzel','Merida'], correct:0 },
+
+  // ── SUPER MARIO ──
+  { cat:'mario', emoji:'🍄', q:'What does Mario collect to grow bigger?', a:['Super Mushroom','Star','Coin','Fire Flower'], correct:0 },
+  { cat:'mario', emoji:'🎮', q:'What is the name of the princess Mario always rescues?', a:['Princess Peach','Princess Daisy','Princess Rosalina','Princess Zelda'], correct:0 },
+  { cat:'mario', emoji:'🍄', q:'What is the name of Mario\'s dinosaur friend?', a:['Yoshi','Koopa','Bowser','Toad'], correct:0 },
+  { cat:'mario', emoji:'🎮', q:'What is the name of the bad guy in Super Mario?', a:['Bowser','Wario','Waluigi','Koopa'], correct:0 },
+  { cat:'mario', emoji:'🍄', q:'What color hat does Mario wear?', a:['Red','Blue','Green','Yellow'], correct:0 },
+  { cat:'mario', emoji:'🎮', q:'What does Mario collect to earn lives?', a:['Coins / 100 coins','Stars','Mushrooms','Flowers'], correct:0 },
+  { cat:'mario', emoji:'🍄', q:'What color is Luigi\'s hat?', a:['Green','Red','Blue','Yellow'], correct:0 },
+  { cat:'mario', emoji:'🎮', q:'What item lets Mario throw fireballs?', a:['Fire Flower','Star','Cape','Mushroom'], correct:0 },
+  { cat:'mario', emoji:'🍄', q:'What are the little mushroom people in Mario called?', a:['Toads','Goombas','Koopas','Bob-ombs'], correct:0 },
+  { cat:'mario', emoji:'🎮', q:'What is Mario\'s job?', a:['Plumber','Chef','Doctor','Teacher'], correct:0 },
+  { cat:'mario', emoji:'🍄', q:'In Mario Kart, what item makes you spin out when you hit it?', a:['Banana peel','Red shell','Blue shell','Bob-omb'], correct:0 },
+  { cat:'mario', emoji:'🎮', q:'What does a Super Star do in Mario?', a:['Makes you invincible','Makes you fly','Makes you grow','Gives extra lives'], correct:0 },
+
+  // ── ANIMALS & NATURE ──
+  { cat:'animals', emoji:'🐾', q:'How many legs does a spider have?', a:['8','6','4','10'], correct:0 },
+  { cat:'animals', emoji:'🦁', q:'What is the fastest land animal in the world?', a:['Cheetah','Lion','Horse','Ostrich'], correct:0 },
+  { cat:'animals', emoji:'🐾', q:'What do caterpillars turn into?', a:['Butterflies or moths','Bees','Dragonflies','Beetles'], correct:0 },
+  { cat:'animals', emoji:'🦁', q:'What is the tallest animal in the world?', a:['Giraffe','Elephant','Ostrich','Polar Bear'], correct:0 },
+  { cat:'animals', emoji:'🐾', q:'What sound does a duck make?', a:['Quack','Moo','Oink','Baa'], correct:0 },
+  { cat:'animals', emoji:'🦁', q:'How many legs does an insect have?', a:['6','4','8','10'], correct:0 },
+  { cat:'animals', emoji:'🐾', q:'What is a baby dog called?', a:['Puppy','Kitten','Cub','Foal'], correct:0 },
+  { cat:'animals', emoji:'🦁', q:'Which animal has a pouch to carry its baby?', a:['Kangaroo','Bear','Elephant','Dolphin'], correct:0 },
+  { cat:'animals', emoji:'🐾', q:'What do bees make?', a:['Honey','Milk','Butter','Wax only'], correct:0 },
+  { cat:'animals', emoji:'🦁', q:'What is the biggest animal in the ocean?', a:['Blue Whale','Great White Shark','Giant Squid','Orca'], correct:0 },
+  { cat:'animals', emoji:'🐾', q:'What is a baby cat called?', a:['Kitten','Puppy','Cub','Lamb'], correct:0 },
+  { cat:'animals', emoji:'🦁', q:'Which bird cannot fly?', a:['Penguin','Eagle','Parrot','Robin'], correct:0 },
+  { cat:'animals', emoji:'🐾', q:'How many humps does a Bactrian camel have?', a:['2','1','3','0'], correct:0 },
+  { cat:'animals', emoji:'🦁', q:'What color are polar bears?', a:['White','Black','Brown','Yellow'], correct:0 },
+  { cat:'animals', emoji:'🐾', q:'What is the only mammal that can truly fly?', a:['Bat','Flying squirrel','Eagle','Sugar glider'], correct:0 },
+];
+
+// ══════════════════════════════════════════════
+// GAME ENGINE
+// ══════════════════════════════════════════════
+const TOTAL_SECONDS = 30;
+const ELIM_1 = 20;
+const ELIM_2 = 26;
+
+const CAT_CONFIG = {
+  math:      { label: '🔢 Math',          cls: 'cat-math'     },
+  letters:   { label: '📝 Letters',       cls: 'cat-letters'  },
+  starwars:  { label: '⚔️ Star Wars',     cls: 'cat-starwars' },
+  minecraft: { label: '⛏️ Minecraft',     cls: 'cat-minecraft'},
+  disney:    { label: '🏰 Disney',        cls: 'cat-disney'   },
+  mario:     { label: '🍄 Super Mario',   cls: 'cat-mario'    },
+  animals:   { label: '🐾 Animals',       cls: 'cat-animals'  },
+};
+
+const CELEBRATE_MESSAGES = [
+  { emoji: '🎉', text: 'That\'s right!' },
+  { emoji: '⭐', text: 'You got it!' },
+  { emoji: '🏆', text: 'Amazing!' },
+  { emoji: '🎊', text: 'Correct!' },
+  { emoji: '🌟', text: 'Awesome!' },
+  { emoji: '🥳', text: 'Woohoo!' },
+  { emoji: '👏', text: 'Great job!' },
+  { emoji: '🚀', text: 'Super smart!' },
+];
+
+const LETTERS = ['A', 'B', 'C', 'D'];
+const COLORS  = ['#4a90d9','#f5a623','#5cb85c','#9b59b6'];
+
+let shuffled     = [];
+let qIndex       = 0;
+let elapsed      = 0;
+let timer        = null;
+let wrongIndices = [];
+let score        = 0;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function prepareQuestions() {
+  shuffled = shuffle(QUESTIONS);
+  qIndex   = 0;
+}
+
+
+function spawnConfetti() {
+  const colors = ['#f5c842','#e8394a','#4a90d9','#5cb85c','#9b59b6','#f5a623','#e84daa'];
+  for (let i = 0; i < 40; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left     = Math.random() * 100 + 'vw';
+    el.style.top      = '-20px';
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.width    = (6 + Math.random() * 8) + 'px';
+    el.style.height   = (6 + Math.random() * 8) + 'px';
+    el.style.animationDelay    = Math.random() * 1.5 + 's';
+    el.style.animationDuration = (2 + Math.random() * 2) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+}
+
+function loadQuestion() {
+  if (qIndex >= shuffled.length) prepareQuestions();
+
+  const q = shuffled[qIndex++];
+  elapsed = 0;
+
+  const correctAnswer  = q.a[q.correct];
+  const shuffledAns    = shuffle(q.a);
+  const newCorrectIdx  = shuffledAns.indexOf(correctAnswer);
+  wrongIndices = shuffle(shuffledAns.map((_,i) => i).filter(i => i !== newCorrectIdx));
+
+  // Category pill
+  const cfg   = CAT_CONFIG[q.cat];
+  const pill  = document.getElementById('cat-pill');
+  pill.textContent = cfg.label;
+  pill.className   = `cat-pill ${cfg.cls}`;
+
+  // Emoji + question
+  const emojiEl = document.getElementById('q-emoji');
+  emojiEl.textContent = q.emoji;
+  emojiEl.style.animation = 'none';
+  emojiEl.offsetHeight;
+  emojiEl.style.animation = '';
+
+  const qEl = document.getElementById('question-text');
+  qEl.style.animation = 'none';
+  qEl.offsetHeight;
+  qEl.style.animation = '';
+  qEl.textContent = q.q;
+
+  // Build answers
+  const grid = document.getElementById('answers-grid');
+  grid.innerHTML = '';
+  shuffledAns.forEach((ans, i) => {
+    const btn = document.createElement('div');
+    btn.className = 'answer-btn';
+    btn.id = `ans-${i}`;
+    btn.dataset.correct = (i === newCorrectIdx) ? '1' : '0';
+    btn.style.animationDelay = `${0.08 + i * 0.06}s`;
+    btn.innerHTML = `
+      <div class="answer-letter" style="background:${COLORS[i]}">${LETTERS[i]}</div>
+      <div class="answer-text">${ans}</div>
+    `;
+    grid.appendChild(btn);
+  });
+
+  // Reset timer
+  const bar = document.getElementById('timer-bar');
+  bar.style.transition = 'none';
+  bar.style.width = '100%';
+  bar.className = 'timer-bar';
+  document.getElementById('timer-seconds').textContent = TOTAL_SECONDS;
+  document.getElementById('timer-seconds').className   = 'timer-seconds';
+  document.getElementById('next-hint').textContent     = '⏱ seconds left';
+
+  if (timer) clearInterval(timer);
+  elapsed = 0;
+  updateTimerDisplay();
+  timer = setInterval(tick, 1000);
+}
+
+function updateTimerDisplay() {
+  const remaining = TOTAL_SECONDS - elapsed;
+  const pct       = (remaining / TOTAL_SECONDS) * 100;
+  const bar       = document.getElementById('timer-bar');
+  bar.style.transition = 'width 1s linear';
+  bar.style.width = pct + '%';
+  document.getElementById('timer-seconds').textContent = Math.max(0, remaining);
+  if (remaining <= 8) {
+    bar.className = 'timer-bar warning';
+    document.getElementById('timer-seconds').className = 'timer-seconds warning';
+  }
+}
+
+function tick() {
+  elapsed++;
+  updateTimerDisplay();
+
+  if (elapsed === ELIM_1) {
+    const idx = wrongIndices[0];
+    if (idx !== undefined) document.getElementById(`ans-${idx}`)?.classList.add('eliminated');
+  }
+  if (elapsed === ELIM_2) {
+    const idx = wrongIndices[1];
+    if (idx !== undefined) document.getElementById(`ans-${idx}`)?.classList.add('eliminated');
+  }
+  if (elapsed >= TOTAL_SECONDS) {
+    clearInterval(timer);
+    revealAnswer();
+  }
+}
+
+function revealAnswer() {
+  document.querySelectorAll('.answer-btn').forEach(btn => {
+    if (btn.dataset.correct !== '1') btn.classList.add('eliminated');
+    else btn.classList.add('correct');
+  });
+
+  // Score + celebrate
+  score++;
+  spawnConfetti();
+
+  const msg = CELEBRATE_MESSAGES[Math.floor(Math.random() * CELEBRATE_MESSAGES.length)];
+  document.getElementById('cel-emoji').textContent = msg.emoji;
+  document.getElementById('cel-text').textContent  = msg.text;
+  const cel = document.getElementById('celebrate');
+  cel.classList.add('show');
+
+  document.getElementById('next-hint').textContent = '🎉 Next question coming...';
+
+  setTimeout(() => {
+    cel.classList.remove('show');
+    setTimeout(loadQuestion, 700);
+  }, 5000);
+}
+
+// ── START ──
+prepareQuestions();
+loadQuestion();
+</script>
+</body>
+</html>
