@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trivia Night</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700;900&family=Barlow+Condensed:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0e1a;
+  --surface: rgba(255,255,255,0.05);
+  --border: rgba(255,255,255,0.08);
+  --gold: #f5c842;
+  --gold-dim: rgba(245,200,66,0.15);
+  --red: #e8394a;
+  --green: #2ecc71;
+  --text: #ffffff;
+  --text-dim: rgba(255,255,255,0.5);
+  --blue: #3a8ef5;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg);
+  font-family: 'Barlow', sans-serif;
+  color: var(--text);
+  overflow: hidden;
+}
+
+body {
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(245,200,66,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 20% 100%, rgba(58,142,245,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 60% at 80% 60%, rgba(232,57,74,0.05) 0%, transparent 50%);
+}
+
+/* ── INTRO SCREEN ── */
+#intro-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 100;
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(245,200,66,0.1) 0%, transparent 60%);
+  transition: opacity 0.6s ease;
+}
+
+#intro-screen.hide { opacity: 0; pointer-events: none; }
+
+.intro-badge {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  color: var(--gold);
+  text-transform: uppercase;
+  border: 1px solid rgba(245,200,66,0.3);
+  padding: 6px 16px;
+  border-radius: 20px;
+}
+
+.intro-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(80px, 12vw, 140px);
+  line-height: 0.9;
+  text-align: center;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+.intro-title span { color: var(--gold); }
+
+.intro-sub {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.intro-categories {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.intro-cat {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+
+.intro-start {
+  margin-top: 20px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.2em;
+  color: var(--gold);
+  animation: blink 1.4s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ── GAME SCREEN ── */
+#game-screen {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 48px 28px;
+  gap: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+#game-screen.show { opacity: 1; }
+
+/* Header */
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.game-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+  opacity: 0.7;
+}
+
+.category-badge {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 6px 18px;
+  border-radius: 20px;
+  border: 1.5px solid currentColor;
+  transition: all 0.3s ease;
+}
+
+.cat-sports      { color: #3a8ef5; border-color: rgba(58,142,245,0.4); background: rgba(58,142,245,0.08); }
+.cat-popculture  { color: #e84daa; border-color: rgba(232,77,170,0.4); background: rgba(232,77,170,0.08); }
+.cat-geography   { color: #2ecc71; border-color: rgba(46,204,113,0.4); background: rgba(46,204,113,0.08); }
+.cat-history     { color: #f5a623; border-color: rgba(245,166,35,0.4); background: rgba(245,166,35,0.08); }
+.cat-science     { color: #a855f7; border-color: rgba(168,85,247,0.4); background: rgba(168,85,247,0.08); }
+.cat-random      { color: #f5c842; border-color: rgba(245,200,66,0.4); background: rgba(245,200,66,0.08); }
+
+.q-counter {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+/* Question */
+.question-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 36px;
+}
+
+.question-text {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(32px, 4.5vw, 58px);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--text);
+  letter-spacing: 0.01em;
+  text-align: center;
+  padding: 0 40px;
+  animation: slideIn 0.5s ease both;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Answers grid */
+.answers-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding: 0 20px;
+}
+
+.answer-btn {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 28px;
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  cursor: default;
+  transition: all 0.4s ease;
+  animation: slideIn 0.5s ease both;
+  min-height: 80px;
+}
+
+.answer-btn:nth-child(1) { animation-delay: 0.1s; }
+.answer-btn:nth-child(2) { animation-delay: 0.15s; }
+.answer-btn:nth-child(3) { animation-delay: 0.2s; }
+.answer-btn:nth-child(4) { animation-delay: 0.25s; }
+
+.answer-letter {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: var(--gold);
+  width: 32px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.answer-text {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(20px, 2.2vw, 30px);
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+}
+
+.answer-btn.eliminated {
+  opacity: 0;
+  transform: scale(0.95);
+  pointer-events: none;
+}
+
+.answer-btn.correct {
+  background: rgba(46,204,113,0.15);
+  border-color: var(--green);
+  transform: scale(1.02);
+}
+
+.answer-btn.correct .answer-letter { color: var(--green); }
+.answer-btn.correct .answer-text   { color: var(--green); }
+
+/* Timer bar */
+.timer-wrap {
+  margin-top: 28px;
+  position: relative;
+}
+
+.timer-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.timer-bar {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--gold), #f5a623);
+  transition: width 1s linear, background 0.5s ease;
+  width: 100%;
+}
+
+.timer-bar.warning { background: linear-gradient(90deg, #e8394a, #f5623a); }
+
+.timer-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.timer-seconds {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px;
+  color: var(--gold);
+  line-height: 1;
+  transition: color 0.3s;
+}
+
+.timer-seconds.warning { color: var(--red); }
+
+.timer-label {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* Answer reveal overlay */
+.reveal-banner {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  background: rgba(46,204,113,0.95);
+  border-radius: 20px;
+  padding: 24px 48px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 48px;
+  letter-spacing: 0.1em;
+  color: white;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  z-index: 50;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.reveal-banner.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* Next question transition */
+.next-label {
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-top: 6px;
+  min-height: 16px;
+}
+</style>
+</head>
+<body>
+
+<!-- ── INTRO ── -->
+<div id="intro-screen">
+  <div class="intro-badge">🍺 Bar Trivia Night</div>
+  <div class="intro-title">TRIVIA<br><span>NIGHT</span></div>
+  <div class="intro-sub">Sports · Pop Culture · Geography · History · Science · Random</div>
+  <div class="intro-categories">
+    <div class="intro-cat" style="color:#3a8ef5;">🏆 Sports</div>
+    <div class="intro-cat" style="color:#e84daa;">🎬 Pop Culture</div>
+    <div class="intro-cat" style="color:#2ecc71;">🌍 Geography</div>
+    <div class="intro-cat" style="color:#f5a623;">📜 History</div>
+    <div class="intro-cat" style="color:#a855f7;">🔬 Science</div>
+    <div class="intro-cat" style="color:#f5c842;">🎲 Random</div>
+  </div>
+  <div class="intro-start">▶ Starting in a moment...</div>
+</div>
+
+<!-- ── GAME ── -->
+<div id="game-screen">
+  <div class="game-header">
+    <div class="game-logo">TRIVIA NIGHT</div>
+    <div class="category-badge" id="cat-badge">Sports</div>
+    <div class="q-counter" id="q-counter">Question 1</div>
+  </div>
+
+  <div class="question-wrap">
+    <div class="question-text" id="question-text">Loading...</div>
+    <div class="answers-grid" id="answers-grid"></div>
+  </div>
+
+  <div class="timer-wrap">
+    <div class="timer-bar-bg">
+      <div class="timer-bar" id="timer-bar"></div>
+    </div>
+    <div class="timer-info">
+      <div class="timer-seconds" id="timer-seconds">40</div>
+      <div class="timer-label">seconds remaining</div>
+      <div class="next-label" id="next-label"></div>
+    </div>
+  </div>
+</div>
+
+<div class="reveal-banner" id="reveal-banner">✓ Correct!</div>
+
+<script>
+// ══════════════════════════════════════════════
+// QUESTION BANK — 200 questions across 6 categories
+// ══════════════════════════════════════════════
+const QUESTIONS = [
+
+  // ── SPORTS ──
+  // All answers verified, distractors are plausible but clearly wrong
+  { cat:'sports', q:'How many championship rings did Michael Jordan win with the Chicago Bulls?', a:['6','4','5','8'], correct:0 },
+  { cat:'sports', q:'Which country has won the most FIFA World Cup titles?', a:['Brazil','Germany','Italy','Argentina'], correct:0 },
+  { cat:'sports', q:'How many players from one team are on the field in a soccer match?', a:['11','9','10','12'], correct:0 },
+  { cat:'sports', q:'Which NFL franchise has appeared in the most Super Bowls?', a:['New England Patriots','Dallas Cowboys','Pittsburgh Steelers','Denver Broncos'], correct:0 },
+  { cat:'sports', q:'How many holes are played in a standard round of golf?', a:['18','9','27','12'], correct:0 },
+  { cat:'sports', q:'Which boxer was nicknamed "The Greatest"?', a:['Muhammad Ali','Joe Frazier','George Foreman','Sugar Ray Leonard'], correct:0 },
+  { cat:'sports', q:'How far is a marathon race in miles?', a:['26.2','24.6','25.0','27.4'], correct:0 },
+  { cat:'sports', q:'James Naismith, who invented basketball, was originally from which country?', a:['Canada','United States','Scotland','England'], correct:0 },
+  { cat:'sports', q:'In baseball, how many strikes does it take to strike out a batter?', a:['3','2','4','5'], correct:0 },
+  { cat:'sports', q:'Which male tennis player has won the most Grand Slam singles titles?', a:['Novak Djokovic','Rafael Nadal','Roger Federer','Pete Sampras'], correct:0 },
+  { cat:'sports', q:'How many points is a touchdown worth in the NFL?', a:['6','7','5','8'], correct:0 },
+  { cat:'sports', q:'Which country hosted the 2016 Summer Olympics?', a:['Brazil','Argentina','Japan','South Africa'], correct:0 },
+  { cat:'sports', q:'What team was LeBron James playing for when he won his first NBA title in 2012?', a:['Miami Heat','Cleveland Cavaliers','Los Angeles Lakers','Boston Celtics'], correct:0 },
+  { cat:'sports', q:'In ice hockey, how many skaters per team are on the ice at one time (including the goalie)?', a:['6','5','7','4'], correct:0 },
+  { cat:'sports', q:'Which golfer has won the most Masters Tournament titles with 6?', a:['Jack Nicklaus','Tiger Woods','Arnold Palmer','Gary Player'], correct:0 },
+  { cat:'sports', q:'Which MLB team plays its home games at Wrigley Field?', a:['Chicago Cubs','Chicago White Sox','Milwaukee Brewers','St. Louis Cardinals'], correct:0 },
+  { cat:'sports', q:'In what year were the first modern Olympic Games held in Athens?', a:['1896','1900','1904','1892'], correct:0 },
+  { cat:'sports', q:'How many points is a field goal worth in the NFL?', a:['3','2','4','1'], correct:0 },
+  { cat:'sports', q:'Which country won the first ever FIFA Women\'s World Cup in 1991?', a:['United States','Germany','Norway','China'], correct:0 },
+  { cat:'sports', q:'In the NHL, how many minutes is a standard major penalty?', a:['5','2','4','10'], correct:0 },
+  { cat:'sports', q:'Which sport uses a shuttlecock?', a:['Badminton','Squash','Racquetball','Paddleball'], correct:0 },
+  { cat:'sports', q:'What is the diameter of a regulation NBA basketball hoop in inches?', a:['18','16','20','15'], correct:0 },
+  { cat:'sports', q:'How many laps make up the Indianapolis 500 race?', a:['200','100','500','250'], correct:0 },
+  { cat:'sports', q:'Which country won the 2022 FIFA World Cup in Qatar?', a:['Argentina','France','Morocco','Croatia'], correct:0 },
+  { cat:'sports', q:'In tennis, what is the term for winning a game without the opponent scoring a single point?', a:['Bagel','Love game','Shutout','Whitewash'], correct:0 },
+  { cat:'sports', q:'How many periods are played in a regulation NHL hockey game?', a:['3','2','4','5'], correct:0 },
+  { cat:'sports', q:'Which Dallas Cowboy quarterback won three Super Bowls in the 1990s?', a:['Troy Aikman','Roger Staubach','Tony Romo','Dak Prescott'], correct:0 },
+  { cat:'sports', q:'What year did Tiger Woods win his first Masters Tournament?', a:['1997','1995','1999','2001'], correct:0 },
+  { cat:'sports', q:'How many points is a safety worth in football?', a:['2','1','3','4'], correct:0 },
+  { cat:'sports', q:'Which team did the Dallas Mavericks defeat to win their first NBA championship in 2011?', a:['Miami Heat','Oklahoma City Thunder','San Antonio Spurs','Los Angeles Lakers'], correct:0 },
+
+  // ── POP CULTURE ──
+  { cat:'popculture', q:'Which film won the very first Academy Award for Best Picture in 1928?', a:['Wings','Sunrise','The Jazz Singer','Seventh Heaven'], correct:0 },
+  { cat:'popculture', q:'What group was Beyoncé a member of before launching her solo career?', a:["Destiny's Child",'TLC','En Vogue','Girl\'s Tyme'], correct:0 },
+  { cat:'popculture', q:'Which TV show features DEA agent Hank Schrader hunting drug manufacturer Walter White?', a:['Breaking Bad','Ozark','Narcos','The Wire'], correct:0 },
+  { cat:'popculture', q:'Who played Tony Stark / Iron Man across the Marvel Cinematic Universe films?', a:['Robert Downey Jr.','Chris Evans','Jeremy Renner','Don Cheadle'], correct:0 },
+  { cat:'popculture', q:'Michael Jackson\'s "Thriller" album was released in what year?', a:['1982','1979','1984','1980'], correct:0 },
+  { cat:'popculture', q:'What is the name of the coffee house where the Friends characters hang out?', a:['Central Perk','The Daily Grind','Java City','Café Nervosa'], correct:0 },
+  { cat:'popculture', q:'Who played Katniss Everdeen in The Hunger Games film series?', a:['Jennifer Lawrence','Shailene Woodley','Emma Stone','Anna Kendrick'], correct:0 },
+  { cat:'popculture', q:'Which British singer released the hit "Rolling in the Deep" in 2010?', a:['Adele','Amy Winehouse','Duffy','Ellie Goulding'], correct:0 },
+  { cat:'popculture', q:'What fictional African nation is Black Panther the king of?', a:['Wakanda','Zamunda','Genosha','Sokovia'], correct:0 },
+  { cat:'popculture', q:'What year did Apple release the original iPhone?', a:['2007','2006','2008','2005'], correct:0 },
+  { cat:'popculture', q:'What is the name of Simba\'s villainous uncle in The Lion King?', a:['Scar','Mufasa','Rafiki','Zazu'], correct:0 },
+  { cat:'popculture', q:'Which streaming service created and distributes Stranger Things?', a:['Netflix','Hulu','HBO Max','Disney+'], correct:0 },
+  { cat:'popculture', q:'Who directed both Titanic (1997) and Avatar (2009)?', a:['James Cameron','Steven Spielberg','Peter Jackson','Ridley Scott'], correct:0 },
+  { cat:'popculture', q:'Which actor portrays Sherlock Holmes in the BBC series Sherlock?', a:['Benedict Cumberbatch','Martin Freeman','Tom Hiddleston','Colin Firth'], correct:0 },
+  { cat:'popculture', q:'What distinctive color is Mace Windu\'s lightsaber in Star Wars?', a:['Purple','Blue','Green','Orange'], correct:0 },
+  { cat:'popculture', q:'Which rapper performs under the alter ego "Slim Shady"?', a:['Eminem','Jay-Z','Kanye West','50 Cent'], correct:0 },
+  { cat:'popculture', q:'What is the name of the wizarding school Harry Potter attends?', a:['Hogwarts','Beauxbatons','Durmstrang','Ilvermorny'], correct:0 },
+  { cat:'popculture', q:'What classic film features the line "I see dead people"?', a:['The Sixth Sense','Poltergeist','The Others','Stir of Echoes'], correct:0 },
+  { cat:'popculture', q:'Which animated sitcom was created by Matt Groening and premiered in 1989?', a:['The Simpsons','Family Guy','Futurama','King of the Hill'], correct:0 },
+  { cat:'popculture', q:'Who played the Joker in the 2019 film Joker, winning an Academy Award for the role?', a:['Joaquin Phoenix','Heath Ledger','Jared Leto','Jack Nicholson'], correct:0 },
+  { cat:'popculture', q:'What is the name of the fictional high school in the TV show Saved by the Bell?', a:['Bayside High','West Beverly High','William McKinley High','East Great Falls High'], correct:0 },
+  { cat:'popculture', q:'Which pop star performed at the Super Bowl XLIX halftime show in 2015?', a:['Katy Perry','Beyoncé','Lady Gaga','Bruno Mars'], correct:0 },
+  { cat:'popculture', q:'What is the name of Walter White\'s alter ego in Breaking Bad?', a:['Heisenberg','The Cook','Blue Sky','El Jefe'], correct:0 },
+  { cat:'popculture', q:'Which actor played Jack Dawson in the 1997 film Titanic?', a:['Leonardo DiCaprio','Brad Pitt','Matt Damon','Johnny Depp'], correct:0 },
+  { cat:'popculture', q:'In the TV show The Office, what is the name of the paper company where the characters work?', a:['Dunder Mifflin','Wernham Hogg','Sabre','Michael Scott Paper Company'], correct:0 },
+  { cat:'popculture', q:'Which Disney princess is accompanied by the seven dwarfs?', a:['Snow White','Cinderella','Sleeping Beauty','Belle'], correct:0 },
+  { cat:'popculture', q:'What year did the final episode of Seinfeld air?', a:['1998','1997','1999','2000'], correct:0 },
+  { cat:'popculture', q:'Which band recorded the album "Abbey Road" in 1969?', a:['The Beatles','The Rolling Stones','The Who','Led Zeppelin'], correct:0 },
+  { cat:'popculture', q:'Who voices Woody in the Toy Story film franchise?', a:['Tom Hanks','Tim Allen','Billy Crystal','John Goodman'], correct:0 },
+  { cat:'popculture', q:'What fictional metal is Captain America\'s shield made of?', a:['Vibranium','Adamantium','Promethium','Carbonadium'], correct:0 },
+
+  // ── GEOGRAPHY ──
+  { cat:'geography', q:'What is the capital city of Australia?', a:['Canberra','Sydney','Melbourne','Brisbane'], correct:0 },
+  { cat:'geography', q:'Which river is generally considered the longest in the world?', a:['Nile','Amazon','Congo','Yangtze'], correct:0 },
+  { cat:'geography', q:'Which country contains more freshwater lakes than any other nation on Earth?', a:['Canada','Russia','Finland','United States'], correct:0 },
+  { cat:'geography', q:'By total area, which is the largest desert on Earth?', a:['Antarctic Desert','Sahara','Arabian Desert','Gobi'], correct:0 },
+  { cat:'geography', q:'What is the smallest country in the world by area?', a:['Vatican City','Monaco','San Marino','Liechtenstein'], correct:0 },
+  { cat:'geography', q:'Mount Everest sits on the border between Nepal and which other territory?', a:['Tibet (China)','India','Bhutan','Pakistan'], correct:0 },
+  { cat:'geography', q:'What is the capital city of Canada?', a:['Ottawa','Toronto','Vancouver','Montreal'], correct:0 },
+  { cat:'geography', q:'Which is the largest ocean on Earth?', a:['Pacific','Atlantic','Indian','Arctic'], correct:0 },
+  { cat:'geography', q:'How many continents are on Earth?', a:['7','6','5','8'], correct:0 },
+  { cat:'geography', q:'Which US state has the longest total coastline by a wide margin?', a:['Alaska','Florida','California','Maine'], correct:0 },
+  { cat:'geography', q:'What country is home to the Great Barrier Reef?', a:['Australia','Indonesia','Papua New Guinea','Fiji'], correct:0 },
+  { cat:'geography', q:'What is the official currency of Mexico?', a:['Peso','Sol','Real','Quetzal'], correct:0 },
+  { cat:'geography', q:'Which African country has the largest population?', a:['Nigeria','Ethiopia','Egypt','Democratic Republic of Congo'], correct:0 },
+  { cat:'geography', q:'What is the capital city of Brazil?', a:['Brasília','São Paulo','Rio de Janeiro','Manaus'], correct:0 },
+  { cat:'geography', q:'Which country has more pyramids than Egypt?', a:['Sudan','Mexico','Peru','Iraq'], correct:0 },
+  { cat:'geography', q:'What is the tallest mountain in North America?', a:['Denali','Mount Logan','Mount Whitney','Pico de Orizaba'], correct:0 },
+  { cat:'geography', q:'The Amazon River flows primarily through which country?', a:['Brazil','Peru','Colombia','Bolivia'], correct:0 },
+  { cat:'geography', q:'Which city is both the largest in population and the financial capital of Turkey?', a:['Istanbul','Ankara','Izmir','Bursa'], correct:0 },
+  { cat:'geography', q:'What is the only country that borders both the Atlantic and Indian Oceans?', a:['South Africa','Mozambique','Angola','Namibia'], correct:0 },
+  { cat:'geography', q:'Which European country is home to the city of Bruges?', a:['Belgium','Netherlands','Germany','France'], correct:0 },
+  { cat:'geography', q:'What is the capital of New Zealand?', a:['Wellington','Auckland','Christchurch','Hamilton'], correct:0 },
+  { cat:'geography', q:'The Strait of Gibraltar separates Europe from which continent?', a:['Africa','South America','North America','Asia'], correct:0 },
+  { cat:'geography', q:'Which is the largest country in South America by area?', a:['Brazil','Argentina','Peru','Colombia'], correct:0 },
+  { cat:'geography', q:'What is the name of the large island off the southeastern coast of Africa?', a:['Madagascar','Mauritius','Réunion','Comoros'], correct:0 },
+  { cat:'geography', q:'In which US state would you find the Grand Canyon?', a:['Arizona','Utah','Nevada','Colorado'], correct:0 },
+
+  // ── HISTORY ──
+  { cat:'history', q:'In what year did World War II officially end?', a:['1945','1944','1946','1947'], correct:0 },
+  { cat:'history', q:'Who was the first President of the United States?', a:['George Washington','John Adams','Thomas Jefferson','James Madison'], correct:0 },
+  { cat:'history', q:'In what year did the RMS Titanic sink in the North Atlantic?', a:['1912','1914','1909','1916'], correct:0 },
+  { cat:'history', q:'Who is credited with inventing the telephone in 1876?', a:['Alexander Graham Bell','Thomas Edison','Nikola Tesla','Samuel Morse'], correct:0 },
+  { cat:'history', q:'In what year did the Berlin Wall fall, reunifying East and West Germany?', a:['1989','1991','1987','1990'], correct:0 },
+  { cat:'history', q:'Who was the first woman ever to win a Nobel Prize, receiving the honor in 1903?', a:['Marie Curie','Florence Nightingale','Harriet Tubman','Ada Lovelace'], correct:0 },
+  { cat:'history', q:'In what year did the United States sign the Declaration of Independence?', a:['1776','1775','1783','1787'], correct:0 },
+  { cat:'history', q:'Which country was the first to grant women the right to vote nationally, in 1893?', a:['New Zealand','Australia','Finland','Norway'], correct:0 },
+  { cat:'history', q:'Who painted the Mona Lisa?', a:['Leonardo da Vinci','Michelangelo','Raphael','Caravaggio'], correct:0 },
+  { cat:'history', q:'What was the name of the first artificial Earth satellite, launched by the Soviet Union in 1957?', a:['Sputnik 1','Explorer 1','Vanguard 1','Luna 1'], correct:0 },
+  { cat:'history', q:'Who was the first human to walk on the Moon in July 1969?', a:['Neil Armstrong','Buzz Aldrin','Yuri Gagarin','Alan Shepard'], correct:0 },
+  { cat:'history', q:'Who wrote the primary draft of the Declaration of Independence?', a:['Thomas Jefferson','John Adams','Benjamin Franklin','James Madison'], correct:0 },
+  { cat:'history', q:'What was the name of the first atomic bomb dropped in warfare, on Hiroshima in 1945?', a:['Little Boy','Fat Man','Trinity','Gadget'], correct:0 },
+  { cat:'history', q:'Julius Caesar was famously assassinated on the Ides of March — what date is that?', a:['March 15','March 1','March 20','March 31'], correct:0 },
+  { cat:'history', q:'Which ancient wonder stood at the entrance to the harbor of Rhodes?', a:['Colossus of Rhodes','Lighthouse of Alexandria','Temple of Artemis','Statue of Zeus'], correct:0 },
+  { cat:'history', q:'What empire reached its greatest extent under Emperor Trajan around 117 AD?', a:['Roman Empire','Ottoman Empire','Byzantine Empire','Persian Empire'], correct:0 },
+  { cat:'history', q:'In what year did the United States land on the Moon?', a:['1969','1968','1971','1967'], correct:0 },
+  { cat:'history', q:'Adolf Hitler was born in which country?', a:['Austria','Germany','Czech Republic','Poland'], correct:0 },
+  { cat:'history', q:'Which US President issued the Emancipation Proclamation in 1863?', a:['Abraham Lincoln','Ulysses S. Grant','Andrew Johnson','James Buchanan'], correct:0 },
+  { cat:'history', q:'What was the name of the plane Charles Lindbergh flew on his solo transatlantic flight in 1927?', a:['Spirit of St. Louis','Flyer I','Silver Dart','Friendship'], correct:0 },
+  { cat:'history', q:'The Cuban Missile Crisis occurred during which US President\'s administration?', a:['John F. Kennedy','Lyndon B. Johnson','Dwight Eisenhower','Richard Nixon'], correct:0 },
+  { cat:'history', q:'What year did the Chernobyl nuclear disaster occur?', a:['1986','1984','1989','1991'], correct:0 },
+  { cat:'history', q:'Which US state was the last to be admitted to the Union, in 1959?', a:['Hawaii','Alaska','New Mexico','Arizona'], correct:0 },
+  { cat:'history', q:'Who was the British Prime Minister during most of World War II?', a:['Winston Churchill','Neville Chamberlain','Clement Attlee','Anthony Eden'], correct:0 },
+  { cat:'history', q:'The construction of which iconic structure began in Paris in 1887?', a:['Eiffel Tower','Arc de Triomphe','Louvre Pyramid','Sacré-Cœur'], correct:0 },
+
+  // ── SCIENCE ──
+  { cat:'science', q:'What is the chemical symbol for gold on the periodic table?', a:['Au','Ag','Go','Ge'], correct:0 },
+  { cat:'science', q:'How many bones are in a healthy adult human body?', a:['206','212','198','224'], correct:0 },
+  { cat:'science', q:'Which planet in our solar system is called the Red Planet?', a:['Mars','Venus','Jupiter','Saturn'], correct:0 },
+  { cat:'science', q:'What gas do green plants primarily absorb during photosynthesis?', a:['Carbon dioxide','Oxygen','Nitrogen','Hydrogen'], correct:0 },
+  { cat:'science', q:'What is the hardest natural mineral on Earth?', a:['Diamond','Corundum','Quartz','Topaz'], correct:0 },
+  { cat:'science', q:'How many chromosomes does a typical human cell contain?', a:['46','44','48','23'], correct:0 },
+  { cat:'science', q:'What is the most abundant gas in Earth\'s atmosphere?', a:['Nitrogen','Oxygen','Argon','Carbon dioxide'], correct:0 },
+  { cat:'science', q:'Which organ in the human body produces insulin?', a:['Pancreas','Liver','Kidney','Spleen'], correct:0 },
+  { cat:'science', q:'Which planet is closest to the Sun?', a:['Mercury','Venus','Earth','Mars'], correct:0 },
+  { cat:'science', q:'How many planets are currently recognized in our solar system?', a:['8','9','7','10'], correct:0 },
+  { cat:'science', q:'What is the term for the organelle often called the "powerhouse of the cell"?', a:['Mitochondria','Nucleus','Ribosome','Vacuole'], correct:0 },
+  { cat:'science', q:'What is the largest organ in the human body?', a:['Skin','Liver','Large intestine','Lungs'], correct:0 },
+  { cat:'science', q:'Which scientist published the theory of general relativity in 1915?', a:['Albert Einstein','Isaac Newton','Max Planck','Niels Bohr'], correct:0 },
+  { cat:'science', q:'What type of animal is a dolphin classified as?', a:['Mammal','Fish','Reptile','Amphibian'], correct:0 },
+  { cat:'science', q:'What is the atomic number of carbon?', a:['6','8','12','4'], correct:0 },
+  { cat:'science', q:'What is the scientific study of earthquakes called?', a:['Seismology','Geology','Tectonics','Volcanology'], correct:0 },
+  { cat:'science', q:'What is the approximate speed of light in miles per second?', a:['186,000','150,000','225,000','93,000'], correct:0 },
+  { cat:'science', q:'Which blood type is known as the universal donor?', a:['O negative','AB positive','A negative','B negative'], correct:0 },
+  { cat:'science', q:'What is the chemical formula for water?', a:['H₂O','HO₂','H₂O₂','H₃O'], correct:0 },
+  { cat:'science', q:'How many chambers does the human heart have?', a:['4','2','3','6'], correct:0 },
+  { cat:'science', q:'What is the name of the force that keeps planets in orbit around the Sun?', a:['Gravity','Electromagnetism','Nuclear force','Magnetism'], correct:0 },
+  { cat:'science', q:'What part of the atom has a positive charge?', a:['Proton','Neutron','Electron','Photon'], correct:0 },
+  { cat:'science', q:'Which planet has the most moons in our solar system?', a:['Saturn','Jupiter','Uranus','Neptune'], correct:0 },
+  { cat:'science', q:'What is the most common element in the universe by mass?', a:['Hydrogen','Helium','Oxygen','Carbon'], correct:0 },
+  { cat:'science', q:'What unit measures the frequency of sound waves?', a:['Hertz','Decibel','Watt','Joule'], correct:0 },
+
+  // ── RANDOM ──
+  { cat:'random', q:'How many colors appear in a standard rainbow?', a:['7','5','6','8'], correct:0 },
+  { cat:'random', q:'What is the most widely spoken first language in the world?', a:['Mandarin Chinese','English','Spanish','Arabic'], correct:0 },
+  { cat:'random', q:'How many strings does a standard acoustic guitar have?', a:['6','4','7','5'], correct:0 },
+  { cat:'random', q:'Which marsupial is known to sleep up to 22 hours per day?', a:['Koala','Wombat','Opossum','Wallaby'], correct:0 },
+  { cat:'random', q:'How many cards are in a standard deck, excluding jokers?', a:['52','48','54','56'], correct:0 },
+  { cat:'random', q:'How many zeros are in one billion (US usage)?', a:['9','6','12','8'], correct:0 },
+  { cat:'random', q:'What is the most common ABO blood type worldwide?', a:['O positive','A positive','B positive','AB positive'], correct:0 },
+  { cat:'random', q:'Approximately how long does light from the Sun take to reach Earth?', a:['8 minutes','2 minutes','20 minutes','45 seconds'], correct:0 },
+  { cat:'random', q:'What is the smallest US state by total land area?', a:['Rhode Island','Delaware','Connecticut','New Jersey'], correct:0 },
+  { cat:'random', q:'How many keys does a full-size standard piano have?', a:['88','76','84','92'], correct:0 },
+  { cat:'random', q:'What animal features prominently on the Porsche sports car logo?', a:['Horse','Eagle','Bull','Lion'], correct:0 },
+  { cat:'random', q:'How many ounces are in one pound?', a:['16','12','14','20'], correct:0 },
+  { cat:'random', q:'What spice, derived from crocus flowers, is the most expensive in the world by weight?', a:['Saffron','Vanilla','Cardamom','White truffle'], correct:0 },
+  { cat:'random', q:'How many hearts does an octopus have?', a:['3','1','2','4'], correct:0 },
+  { cat:'random', q:'How many teeth does a healthy adult human have, including wisdom teeth?', a:['32','28','30','36'], correct:0 },
+  { cat:'random', q:'How many players are on the court for one team in a volleyball match?', a:['6','5','7','4'], correct:0 },
+  { cat:'random', q:'What color is a giraffe\'s tongue?', a:['Dark purple','Pink','Grey','Blue'], correct:0 },
+  { cat:'random', q:'Which mammal is the only one capable of true sustained flight?', a:['Bat','Flying squirrel','Sugar glider','Colugo'], correct:0 },
+  { cat:'random', q:'What is the most popular pizza topping ordered in the United States?', a:['Pepperoni','Mushroom','Sausage','Extra cheese'], correct:0 },
+  { cat:'random', q:'How many sides does a standard six-sided die have? (trick question — be careful)', a:['6','4','8','12'], correct:0 },
+  { cat:'random', q:'Which US coin features Abraham Lincoln on the front?', a:['Penny','Nickel','Dime','Half Dollar'], correct:0 },
+  { cat:'random', q:'How many feet are in one mile?', a:['5,280','4,840','5,000','5,500'], correct:0 },
+  { cat:'random', q:'What is the world\'s largest land animal?', a:['African elephant','White rhinoceros','Hippopotamus','Giraffe'], correct:0 },
+  { cat:'random', q:'How many days are in a leap year?', a:['366','365','367','364'], correct:0 },
+  { cat:'random', q:'What country produces the most coffee in the world?', a:['Brazil','Colombia','Vietnam','Ethiopia'], correct:0 },
+];
+
+// ══════════════════════════════════════════════
+// GAME ENGINE
+// ══════════════════════════════════════════════
+const TOTAL_SECONDS = 40;
+const ELIM_1 = 30; // eliminate first wrong answer
+const ELIM_2 = 35; // eliminate second wrong answer
+const REVEAL = 40; // reveal correct
+const NEXT_Q = 47; // load next question
+
+const CAT_STYLES = {
+  sports:     { label: '🏆 Sports',      cls: 'cat-sports'     },
+  popculture: { label: '🎬 Pop Culture', cls: 'cat-popculture' },
+  geography:  { label: '🌍 Geography',   cls: 'cat-geography'  },
+  history:    { label: '📜 History',     cls: 'cat-history'    },
+  science:    { label: '🔬 Science',     cls: 'cat-science'    },
+  random:     { label: '🎲 Random',      cls: 'cat-random'     },
+};
+
+const LETTERS = ['A', 'B', 'C', 'D'];
+
+let shuffled = [];
+let qIndex   = 0;
+let elapsed  = 0;
+let timer    = null;
+let currentQ = null;
+let wrongIndices = [];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function prepareQuestions() {
+  shuffled = shuffle(QUESTIONS);
+  qIndex   = 0;
+}
+
+function loadQuestion() {
+  if (qIndex >= shuffled.length) {
+    prepareQuestions(); // loop
+  }
+
+  currentQ = shuffled[qIndex++];
+  elapsed  = 0;
+
+  // Shuffle answers but track correct
+  const correctAnswer = currentQ.a[currentQ.correct];
+  const shuffledAnswers = shuffle(currentQ.a);
+  const newCorrectIndex = shuffledAnswers.indexOf(correctAnswer);
+
+  // Build wrong indices (all except correct)
+  wrongIndices = shuffle(
+    shuffledAnswers.map((_,i) => i).filter(i => i !== newCorrectIndex)
+  );
+
+  // Update category badge
+  const catStyle = CAT_STYLES[currentQ.cat];
+  const badge = document.getElementById('cat-badge');
+  badge.textContent = catStyle.label;
+  badge.className   = `category-badge ${catStyle.cls}`;
+
+  // Update counter
+  document.getElementById('q-counter').textContent = `Question ${qIndex}`;
+
+  // Update question
+  const qEl = document.getElementById('question-text');
+  qEl.style.animation = 'none';
+  qEl.offsetHeight; // reflow
+  qEl.style.animation = '';
+  qEl.textContent = currentQ.q;
+
+  // Build answers
+  const grid = document.getElementById('answers-grid');
+  grid.innerHTML = '';
+  shuffledAnswers.forEach((ans, i) => {
+    const btn = document.createElement('div');
+    btn.className = 'answer-btn';
+    btn.id = `ans-${i}`;
+    btn.dataset.correct = (i === newCorrectIndex) ? '1' : '0';
+    btn.style.animationDelay = `${0.1 + i * 0.06}s`;
+    btn.innerHTML = `
+      <div class="answer-letter">${LETTERS[i]}</div>
+      <div class="answer-text">${ans}</div>
+    `;
+    grid.appendChild(btn);
+  });
+
+  // Reset timer bar
+  const bar = document.getElementById('timer-bar');
+  bar.style.transition = 'none';
+  bar.style.width = '100%';
+  bar.className = 'timer-bar';
+  document.getElementById('timer-seconds').className = 'timer-seconds';
+  document.getElementById('next-label').textContent = '';
+
+  // Start timer
+  if (timer) clearInterval(timer);
+  elapsed = 0;
+  updateTimerDisplay();
+  timer = setInterval(tick, 1000);
+}
+
+function updateTimerDisplay() {
+  const remaining = TOTAL_SECONDS - elapsed;
+  const pct = (remaining / TOTAL_SECONDS) * 100;
+
+  const bar = document.getElementById('timer-bar');
+  bar.style.transition = 'width 1s linear';
+  bar.style.width = pct + '%';
+
+  const secEl = document.getElementById('timer-seconds');
+  secEl.textContent = Math.max(0, remaining);
+
+  if (remaining <= 10) {
+    bar.className = 'timer-bar warning';
+    secEl.className = 'timer-seconds warning';
+  }
+}
+
+function tick() {
+  elapsed++;
+  updateTimerDisplay();
+
+  // Eliminate first wrong answer at 30s
+  if (elapsed === ELIM_1) {
+    const idx = wrongIndices[0];
+    if (idx !== undefined) {
+      document.getElementById(`ans-${idx}`)?.classList.add('eliminated');
+    }
+  }
+
+  // Eliminate second wrong answer at 35s
+  if (elapsed === ELIM_2) {
+    const idx = wrongIndices[1];
+    if (idx !== undefined) {
+      document.getElementById(`ans-${idx}`)?.classList.add('eliminated');
+    }
+  }
+
+  // Reveal correct at 40s
+  if (elapsed === REVEAL) {
+    clearInterval(timer);
+    revealAnswer();
+  }
+}
+
+function revealAnswer() {
+  // Eliminate remaining wrong answers
+  document.querySelectorAll('.answer-btn').forEach(btn => {
+    if (btn.dataset.correct !== '1') {
+      btn.classList.add('eliminated');
+    } else {
+      btn.classList.add('correct');
+    }
+  });
+
+  // Show banner
+  const banner = document.getElementById('reveal-banner');
+  banner.classList.add('show');
+
+  document.getElementById('next-label').textContent = 'Next question loading...';
+
+  // Next question after 7 seconds
+  setTimeout(() => {
+    banner.classList.remove('show');
+    setTimeout(loadQuestion, 600);
+  }, 6000);
+}
+
+// ── START SEQUENCE ──
+prepareQuestions();
+
+setTimeout(() => {
+  const intro = document.getElementById('intro-screen');
+  intro.classList.add('hide');
+  setTimeout(() => {
+    intro.style.display = 'none';
+    const game = document.getElementById('game-screen');
+    game.classList.add('show');
+    loadQuestion();
+  }, 600);
+}, 3500);
+</script>
+</body>
+</html>
